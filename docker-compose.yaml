@@ -1,0 +1,73 @@
+networks:
+  standfor-net:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: standfor-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_DBNAME}
+      PGSSLMODE: ${DATABASE_SSLMODE}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./storage/postgres:/var/lib/postgresql/data
+    networks:
+      - standfor-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: standfor-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "false"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - standfor-net
+
+  redis:
+    image: redis:8-alpine
+    container_name: standfor-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./storage/redis:/data
+    networks:
+      - standfor-net
+    environment:
+      - REDIS_ARGS="--requirepass ${REDIS_PASSWORD}"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: standfor-redisinsight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    environment:
+      - RI_REDIS_HOST=standfor-redis
+      - RI_REDIS_PORT=6379
+      - RI_REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      - redis
+    networks:
+      - standfor-net
