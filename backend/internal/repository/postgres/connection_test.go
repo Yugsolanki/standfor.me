@@ -15,7 +15,7 @@ var testConfig = config.DatabaseConfig{
 	Host:                "localhost",
 	Port:                5432,
 	User:                "postgres",
-	Password:            "postgres",
+	Password:            "wrongpassword",
 	DBName:              "postgres",
 	SSLMode:             "disable",
 	MaxOpenConns:        10,
