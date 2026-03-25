@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Yugsolanki/standfor-me/internal/pkg/httputil"
 	"github.com/go-chi/chi/v5"
 	"github.com/redis/go-redis/v9"
 )
@@ -958,7 +959,7 @@ func TestExtractIP(t *testing.T) {
 				req.Header.Set("X-Forwarded-For", tt.xff)
 			}
 
-			got := extractIP(req, tt.trustProxy)
+			got := httputil.ExtractIP(req, tt.trustProxy)
 			if got != tt.wantIP {
 				t.Errorf("extractIP() = %q, want %q", got, tt.wantIP)
 			}

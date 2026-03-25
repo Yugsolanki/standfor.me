@@ -2,9 +2,10 @@ package ratelimit
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"strings"
+
+	"github.com/Yugsolanki/standfor-me/internal/pkg/httputil"
 )
 
 // KeyFunc extracts the rate limiting key from the HTTP request
@@ -15,7 +16,7 @@ type KeyFunc func(r *http.Request) (string, error)
 // If trustPoxy is true, it checks for X-Forward-For and X-Real-IP headers first
 func KeyByIP(trustProxy bool) KeyFunc {
 	return func(r *http.Request) (string, error) {
-		ip := extractIP(r, trustProxy)
+		ip := httputil.ExtractIP(r, trustProxy)
 		if ip == "" {
 			return "", fmt.Errorf("ratelimit: unable to extract IP from request")
 		}
@@ -39,7 +40,7 @@ func KeyByHeader(header string) KeyFunc {
 // This allows per-route rate limiting
 func KeyByRoute(trustProxy bool) KeyFunc {
 	return func(r *http.Request) (string, error) {
-		ip := extractIP(r, trustProxy)
+		ip := httputil.ExtractIP(r, trustProxy)
 		if ip == "" {
 			return "", fmt.Errorf("ratelimit: unable to extract IP from request")
 		}
@@ -56,7 +57,7 @@ func KeyByUserID(contextKey any, trustProxy bool) KeyFunc {
 		}
 
 		// Fall-Back to IP-based key for authentication requests
-		ip := extractIP(r, trustProxy)
+		ip := httputil.ExtractIP(r, trustProxy)
 		if ip == "" {
 			return "", fmt.Errorf("ratelimit: unable to extract identifier from request")
 		}
@@ -78,37 +79,4 @@ func ComposeKeys(funcs ...KeyFunc) KeyFunc {
 		}
 		return strings.Join(parts, "|"), nil
 	}
-}
-
-// extractIP extracts client's IP address from the request
-func extractIP(r *http.Request, trustProxy bool) string {
-	if trustProxy {
-		// Checking for X-Real-IP first
-		if realIP := r.Header.Get("X-Real-IP"); realIP != "" {
-			if parsedIP := net.ParseIP(strings.TrimSpace(realIP)); parsedIP != nil {
-				return parsedIP.String()
-			}
-		}
-
-		// Checking for X-Forwarded-For
-		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			parts := strings.Split(xff, ",")
-			if len(parts) > 0 {
-				clientIP := strings.TrimSpace(parts[0])
-				if parsedIP := net.ParseIP(clientIP); parsedIP != nil {
-					return parsedIP.String()
-				}
-			}
-		}
-	}
-
-	// Fallback to RemoteAddr
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		if parsedIP := net.ParseIP(r.RemoteAddr); parsedIP != nil {
-			return parsedIP.String()
-		}
-		return r.RemoteAddr
-	}
-	return host
 }
