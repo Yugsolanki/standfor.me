@@ -66,9 +66,14 @@ type JWTConfig struct {
 	Issuer          string        `mapstructure:"issuer"  validate:"required"`
 }
 
+// --- Rate Limiters ---
+type RateLimitGlobalConfig struct {
+	Limit  int           `mapstructure:"limit"  validate:"required,min=1"`
+	Window time.Duration `mapstructure:"window"  validate:"required"`
+}
+
 type RateLimitConfig struct {
-	RPS   int `mapstructure:"rps"  validate:"required,min=1"`
-	Burst int `mapstructure:"burst"  validate:"required,min=1"`
+	Global RateLimitGlobalConfig `mapstructure:"global"  validate:"required"`
 }
 
 func Load() (*Config, error) {
@@ -158,6 +163,6 @@ func SetDefaults(v *viper.Viper) {
 	v.SetDefault("jwt.issuer", "standfor.me")
 
 	// Rate Limiting
-	v.SetDefault("rate_limit.rps", 10)
-	v.SetDefault("rate_limit.burst", 20)
+	v.SetDefault("rate_limit.global.limit", 100)
+	v.SetDefault("rate_limit.global.window", "1m")
 }

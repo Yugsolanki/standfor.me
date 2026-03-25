@@ -51,7 +51,7 @@ func main() {
 	slog.Info("redis connection established")
 
 	// --- Server
-	srv := server.New(&cfg.Server, logger, &server.Services{})
+	srv := server.New(&cfg.Server, logger, &server.Services{}, redisClient, &cfg.RateLimit)
 
 	// --- Graceful Shutdown
 	go func() {

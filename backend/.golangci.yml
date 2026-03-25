@@ -29,13 +29,13 @@ linters:
     errcheck:
       check-type-assertions: false
       check-blank: false
-    govet:
-      enable:
-        - shadow
     revive:
       rules:
         - name: blank-imports
           disabled: true
+    modernize:
+      disable:
+        - any
 
 formatters:
   enable:
