@@ -142,7 +142,7 @@ func (tw *timeoutWriter) Flush() {
 	if f, ok := tw.ResponseWriter.(http.Flusher); ok {
 		// Flush buffered body to real writer
 		if len(tw.body) > 0 {
-			tw.ResponseWriter.Write(tw.body)
+			_, _ = tw.ResponseWriter.Write(tw.body)
 			tw.body = nil // Clear buffer after flush
 			f.Flush()
 		}
