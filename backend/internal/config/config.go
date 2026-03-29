@@ -29,6 +29,7 @@ type ServerConfig struct {
 	ReadTimeout     time.Duration `mapstructure:"read_timeout" validate:"required"`
 	WriteTimeout    time.Duration `mapstructure:"write_timeout" validate:"required"`
 	ShutdownTimeout time.Duration `mapstructure:"shutdown_timeout" validate:"required"`
+	RequestTimeout  time.Duration `mapstructure:"request_timeout" validate:"required"`
 }
 
 type DatabaseConfig struct {
@@ -134,6 +135,7 @@ func SetDefaults(v *viper.Viper) {
 	v.SetDefault("server.read_timeout", "10s")
 	v.SetDefault("server.write_timeout", "15s")
 	v.SetDefault("server.shutdown_timeout", "30s")
+	v.SetDefault("server.request_timeout", "30s")
 
 	// Database (PostgreSQL)
 	v.SetDefault("database.host", "localhost")
