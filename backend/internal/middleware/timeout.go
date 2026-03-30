@@ -69,9 +69,9 @@ func Timeout(duration time.Duration) func(http.Handler) http.Handler {
 				// Timeout exceeded
 				tw.mu.Lock()
 				tw.timedOut = true
+				requestID := tw.header.Get(RequestIDHeader)
 				tw.mu.Unlock()
 
-				requestID := GetRequestID(r.Context())
 				logger.AddField(r.Context(), "timeout", true)
 				logger.AddField(r.Context(), "timeout_duration", duration.String())
 
@@ -116,7 +116,7 @@ func (tw *timeoutWriter) Header() http.Header {
 func (tw *timeoutWriter) WriteHeader(code int) {
 	tw.mu.Lock()
 	defer tw.mu.Unlock()
-	if !tw.timedOut {
+	if !tw.timedOut && tw.statusCode == 0 {
 		tw.statusCode = code
 	}
 }
