@@ -1,0 +1,11 @@
+# Background Worker
+
+FROM alpine:3.20
+
+ARG TARGETARCH
+
+RUN apk add --no-cache ca-certificates tzdata
+
+COPY linux/${TARGETARCH}/standforme-worker /usr/local/bin/standforme-worker
+
+ENTRYPOINT ["standforme-worker"]

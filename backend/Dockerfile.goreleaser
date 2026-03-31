@@ -1,0 +1,13 @@
+# API Server
+
+FROM alpine:3.20
+
+ARG TARGETARCH
+
+RUN apk add --no-cache ca-certificates tzdata
+
+COPY linux/${TARGETARCH}/standforme-api /usr/local/bin/standforme-api
+
+EXPOSE 8080
+
+ENTRYPOINT ["standforme-api"]
