@@ -8,18 +8,17 @@ services:
     container_name: standfor-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_DBNAME}
-      PGSSLMODE: ${DATABASE_SSLMODE}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
+      POSTGRES_DB: ${DATABASE_DBNAME:-standfor_dev}
     ports:
-      - "5432:5432"
+      - "${DATABASE_PORT:-5432}:5432"
     volumes:
       - ./storage/postgres:/var/lib/postgresql/data
     networks:
       - standfor-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,13 +28,14 @@ services:
     container_name: standfor-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_CONFIG_SERVER_MODE: "false"
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?PGADMIN_PASSWORD is required}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
       - "5050:80"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - standfor-net
 
@@ -43,16 +43,15 @@ services:
     image: redis:8-alpine
     container_name: standfor-redis
     restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - ./storage/redis:/data
     networks:
       - standfor-net
-    environment:
-      - REDIS_ARGS="--requirepass ${REDIS_PASSWORD}"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -66,8 +65,9 @@ services:
     environment:
       - RI_REDIS_HOST=standfor-redis
       - RI_REDIS_PORT=6379
-      - RI_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - RI_REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     networks:
       - standfor-net
