@@ -30,6 +30,7 @@ Core MVP Features:
 
 A platform for users to publicly share and verify their support for social movements/causes with shareable profiles.
 
+```md
 Phase 1 - Launch
 ├── User profiles with shareable links (username.standfor.me)
 ├── Browse/search movement database
@@ -49,6 +50,7 @@ Phase 3 - Discovery
 ├── Movement pages with supporter counts
 ├── Trending movements
 └── Organization claimed pages
+```
 
 ## Tech Stack
 
