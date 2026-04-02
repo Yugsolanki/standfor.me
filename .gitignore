@@ -6,3 +6,6 @@ storage/
 # Backend
 backend/tmp/
 backend/bin/
+
+# Goreleaser
+dist/

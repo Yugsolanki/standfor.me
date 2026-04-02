@@ -1,0 +1,208 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+project_name: standforme
+
+before:
+  hooks:
+    - sh -c "cd backend && go mod tidy"
+
+builds:
+  # --- API Server ---
+  - id: api
+    main: ./cmd/api/main.go
+    binary: standforme-api
+    dir: ./backend
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.Date={{.Date}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+
+  # --- Background Worker ---
+  - id: worker
+    main: ./cmd/worker/main.go
+    binary: standforme-worker
+    dir: ./backend
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.Date={{.Date}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+
+  # --- Background Worker ---
+  - id: migrate
+    main: ./cmd/migrate/main.go
+    binary: standforme-migrate
+    dir: ./backend
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.Date={{.Date}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+
+archives:
+  - ids: [api, worker, migrate]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{ .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - backend/migrations/**/*.sql
+
+checksum:
+  name_template: >-
+    {{ .ProjectName }}_{{ .Version }}_checksums.txt
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^refactor:"
+      - "^style:"
+      - "^ci:"
+      - "merge conflict"
+
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: "🚀 Features"
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "🐛 Bug Fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "🧹 Refactor"
+      regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: "🧪 Tests"
+      regexp: '^.*?test(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: "📚 Documentation"
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 4
+    - title: "📦 Other"
+      order: 999
+
+dockers_v2:
+  # --- API Server Image ---
+  - id: api
+    ids:
+      - api
+    dockerfile: backend/Dockerfile.goreleaser
+    images:
+      - "ghcr.io/yugsolanki/standforme-api"
+    tags:
+      - "v{{ .Version }}"
+      - "{{ if not .IsNightly }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      "org.opencontainers.image.description": "StandForMe API Server"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}-api"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+    build_args:
+      VERSION: "{{ .Version }}"
+
+  # --- Worker Image ---
+  - id: worker
+    ids:
+      - worker
+    dockerfile: backend/Dockerfile.goreleaser.worker
+    images:
+      - "ghcr.io/yugsolanki/standforme-worker"
+    tags:
+      - "v{{ .Version }}"
+      - "{{ if not .IsNightly }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      "org.opencontainers.image.description": "StandForMe Background Worker"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}-worker"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+
+  # --- Migrate Image ---
+  - id: migrate
+    ids:
+      - migrate
+    dockerfile: backend/Dockerfile.goreleaser.migrate
+    images:
+      - "ghcr.io/yugsolanki/standforme-migrate"
+    tags:
+      - "v{{ .Version }}"
+      - "{{ if not .IsNightly }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    extra_files:
+      - backend/migrations
+    labels:
+      "org.opencontainers.image.description": "StandForMe Database Migrations"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}-migrate"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+
+
+release:
+  github:
+    owner: yourusername
+    name: standforme
+  draft: true
+  prerelease: auto
+  name_template: "{{.ProjectName}} v{{.Version}}"
+  header: |
+    ## What's New in {{ .Tag }}
+  footer: |
+    ---
+    **Full Changelog**: https://github.com/yourusername/standforme/compare/{{ .PreviousTag }}...{{ .Tag }}
