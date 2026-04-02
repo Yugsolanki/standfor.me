@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/Yugsolanki/standfor-me/internal/config"
+	"github.com/Yugsolanki/standfor-me/internal/middleware"
 	"github.com/Yugsolanki/standfor-me/internal/middleware/ratelimit"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/response"
 	"github.com/go-chi/chi/v5"
 	"github.com/redis/go-redis/v9"
 )
@@ -40,15 +43,11 @@ func New(cfg *config.ServerConfig, logger *slog.Logger, services *Services, redi
 	// Build handler structs
 
 	// Wire middleware
-	s.setupMiddleware()
+	s.setupMiddleware(cfg)
 
 	// Wire routes
-	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	s.router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
+	s.router.Get("/", s.rootHandler)
+	s.router.Get("/health", s.healthHandler)
 
 	s.http = &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
@@ -72,8 +71,65 @@ func (s *Server) Router() *chi.Mux {
 	return s.router
 }
 
-func (s *Server) setupMiddleware() {
+func (s *Server) setupMiddleware(cfg *config.ServerConfig) {
+	env := os.Getenv("APP_ENV")
+
+	// Request ID middleware
+	s.router.Use(middleware.RequestID)
+
+	// Recoverer
+	s.router.Use(middleware.Recoverer(s.logger))
+
 	// Global Rate Limiter
+	s.router.Use(s.globalRateLimiter())
+	// Payload Size Limiter
+	s.router.Use(middleware.PayloadLimit(middleware.DefaultMaxBodySize))
+
+	// Compress
+	s.router.Use(middleware.Compress)
+
+	// Canonical Logger
+	s.router.Use(middleware.CanonicalLogger(s.logger))
+
+	// Security Headers
+	if env == "development" {
+		s.router.Use(middleware.CORS(middleware.DevelopmentCORSConfig()))
+		s.router.Use(middleware.SecurityHeaders(middleware.DevelopmentSecurityHeadersConfig()))
+	} else {
+		s.router.Use(middleware.CORS(middleware.DefaultCORSConfig()))
+		s.router.Use(middleware.SecurityHeaders(middleware.DefaultSecurityHeadersConfig()))
+	}
+	// CSP Nonce
+	s.router.Use(middleware.CSPNonce())
+
+	// Timeout
+	s.router.Use(middleware.Timeout(cfg.RequestTimeout))
+
+	// Log
+	s.logger.Info("middleware has been established",
+		"app_env", os.Getenv("APP_ENV"),
+		"request_timeout", cfg.RequestTimeout,
+		"max_body_size", middleware.DefaultMaxBodySize,
+		"global_rate_limit", s.rateLimitConfig.Global.Limit,
+		"global_rate_window", s.rateLimitConfig.Global.Window,
+	)
+}
+
+// rootHandler handles the root (/) request.
+func (s *Server) rootHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response.JSONMessage(w, r, http.StatusOK, "OK")
+}
+
+// healthHandler handles the health (/health) check request.
+func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response.JSONMessage(w, r, http.StatusOK, "OK")
+}
+
+func (s *Server) globalRateLimiter() func(http.Handler) http.Handler {
 	globalLimiter, err := ratelimit.New(s.redis, ratelimit.Config{
 		Limit:      s.rateLimitConfig.Global.Limit,
 		Window:     s.rateLimitConfig.Global.Window,
@@ -85,12 +141,14 @@ func (s *Server) setupMiddleware() {
 		},
 		FallbackToAllow: true,
 	}, s.logger)
-
 	if err != nil {
 		s.logger.Error("failed to create global rate limiter", "error", err)
+		// Return a no-op middleware that just passes through if the limiter fails to initialize
+		return func(next http.Handler) http.Handler {
+			return next
+		}
 	}
-	if err == nil {
-		s.logger.Info("ratelimiter has been established")
-	}
-	s.router.Use(globalLimiter.Handler)
+
+	s.logger.Info("ratelimiter has been established")
+	return globalLimiter.Handler
 }
