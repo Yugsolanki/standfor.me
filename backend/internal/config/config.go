@@ -4,7 +4,6 @@ package config
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 	"time"
 
@@ -21,6 +20,7 @@ type Config struct {
 	Redis     RedisConfig     `mapstructure:"redis" validate:"required"`
 	JWT       JWTConfig       `mapstructure:"jwt" validate:"required"`
 	RateLimit RateLimitConfig `mapstructure:"rate_limit" validate:"required"`
+	Worker    WorkerConfig    `mapstructure:"worker" validate:"required"`
 }
 
 type ServerConfig struct {
@@ -30,6 +30,10 @@ type ServerConfig struct {
 	WriteTimeout    time.Duration `mapstructure:"write_timeout" validate:"required"`
 	ShutdownTimeout time.Duration `mapstructure:"shutdown_timeout" validate:"required"`
 	RequestTimeout  time.Duration `mapstructure:"request_timeout" validate:"required"`
+}
+
+type WorkerConfig struct {
+	Concurrency int `mapstructure:"concurrency" validate:"required,min=1"`
 }
 
 type DatabaseConfig struct {
@@ -78,8 +82,15 @@ type RateLimitConfig struct {
 }
 
 func Load() (*Config, error) {
-	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
-		slog.Warn("failed to load .env file", "error", err)
+	loadedEnv := false
+	for _, envPath := range []string{".env", "../.env", "../../.env"} {
+		if err := godotenv.Load(envPath); err == nil {
+			loadedEnv = true
+			break
+		}
+	}
+	if !loadedEnv {
+		slog.Warn("no .env file found, falling back to environment variables")
 	}
 
 	v := viper.New()
@@ -136,6 +147,9 @@ func SetDefaults(v *viper.Viper) {
 	v.SetDefault("server.write_timeout", "15s")
 	v.SetDefault("server.shutdown_timeout", "30s")
 	v.SetDefault("server.request_timeout", "30s")
+
+	// Worker
+	v.SetDefault("worker.concurrency", 10)
 
 	// Database (PostgreSQL)
 	v.SetDefault("database.host", "localhost")
