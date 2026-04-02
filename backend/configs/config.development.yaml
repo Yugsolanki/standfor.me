@@ -1,0 +1,9 @@
+database:
+  host: localhost
+  password: postgres_password
+
+redis:
+  password: redis_password
+
+jwt:
+  secret: dev-secret-change-in-production-min-32-chars

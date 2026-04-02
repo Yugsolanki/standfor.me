@@ -1,0 +1,22 @@
+# app_env: production
+
+# server:
+#   host: 0.0.0.0
+
+# worker:
+#   concurrency: 50
+
+# database:
+#   host: ${DATABASE_HOST}
+#   password: ${DATABASE_PASSWORD}
+#   sslmode: require
+#   max_open_conns: 25
+#   max_idle_conns: 10
+
+# redis:
+#   addr: ${REDIS_ADDR}
+#   password: ${REDIS_PASSWORD}
+#   pool_size: 20
+
+# jwt:
+#   secret: ${JWT_SECRET}
