@@ -19,8 +19,9 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	direction := flag.String("direction", "up", "migration direction: up or down")
+	direction := flag.String("direction", "up", "migration direction: up, down or force")
 	steps := flag.Int("steps", 0, "number of migrations to run (0 = all)")
+	path := flag.String("path", "./migrations", "path to migration files")
 	flag.Parse()
 
 	cfg, err := config.Load()
@@ -29,7 +30,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	m, err := migrate.New("file://migrations", cfg.Database.DSN())
+	m, err := migrate.New("file://"+*path, cfg.Database.DSN())
 	if err != nil {
 		slog.Error("failed to create migrate instance", "error", err)
 		os.Exit(1)
@@ -49,6 +50,8 @@ func main() {
 		} else {
 			err = m.Down()
 		}
+	case "force":
+		err = m.Force(int(*steps))
 	default:
 		slog.Error("invalid direction", "direction", *direction)
 		os.Exit(1)
@@ -61,6 +64,18 @@ func main() {
 
 	version, dirty, err := m.Version()
 	if err != nil {
+		// If the error is "no migration", it just means we are at version 0
+		if err == migrate.ErrNilVersion {
+			slog.Info("✅ migration complete",
+				slog.Group("migration",
+					slog.Uint64("version", 0),
+					slog.Bool("dirty", false),
+					slog.String("direction", *direction),
+				),
+			)
+			return // Exit gracefully
+		}
+
 		slog.Error("failed to get version", "error", err)
 		os.Exit(1)
 	}
