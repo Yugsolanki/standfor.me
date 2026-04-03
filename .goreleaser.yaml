@@ -196,8 +196,8 @@ dockers_v2:
 
 release:
   github:
-    owner: yourusername
-    name: standforme
+    owner: yugsolanki
+    name: standfor.me
   draft: true
   prerelease: auto
   name_template: "{{.ProjectName}} v{{.Version}}"
@@ -205,4 +205,4 @@ release:
     ## What's New in {{ .Tag }}
   footer: |
     ---
-    **Full Changelog**: https://github.com/yourusername/standforme/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/yugsolanki/standfor.me/compare/{{ .PreviousTag }}...{{ .Tag }}
