@@ -11,7 +11,6 @@ var (
 	ErrConflict             = errors.New("resources already exists")
 	ErrUnauthorized         = errors.New("unauthorized")
 	ErrForbidden            = errors.New("forbidden")
-	ErrInvalidInput         = errors.New("invalid input")
 	ErrInternal             = errors.New("internal server error")
 	ErrValidation           = errors.New("validation failed")
 	ErrRateLimit            = errors.New("rate limit exceeded")
@@ -20,12 +19,8 @@ var (
 	ErrServiceUnavailable   = errors.New("service unavailable")
 	ErrExternalServiceError = errors.New("external service error")
 	ErrInvalidCredentials   = errors.New("invalid credentials")
-
-	// User-specific
-	ErrUserNotFoud     = errors.New("user not found")
-	ErrEmailTaken      = errors.New("email already registered")
-	ErrUsernameTaken   = errors.New("username already taken")
-	ErrInvalidPassword = errors.New("invalid password")
+	ErrPayloadTooLarge      = errors.New("payload too large")
+	ErrBadRequest           = errors.New("bad request")
 )
 
 type AppError struct {
@@ -109,18 +104,10 @@ func NewInvalidCredentialsError(op string) *AppError {
 	return &AppError{Err: ErrInvalidCredentials, Op: op, Message: "Invalid credentials. Please try again."}
 }
 
-func NewUserNotFoundError(op, message string) *AppError {
-	return &AppError{Err: ErrUserNotFoud, Op: op, Message: message}
+func NewPayloadTooLargeError(op string) *AppError {
+	return &AppError{Err: ErrPayloadTooLarge, Op: op, Message: "Payload too large. Please try again."}
 }
 
-func NewEmailTakenError(op, message string) *AppError {
-	return &AppError{Err: ErrEmailTaken, Op: op, Message: message}
-}
-
-func NewUsernameTakenError(op, message string) *AppError {
-	return &AppError{Err: ErrUsernameTaken, Op: op, Message: message}
-}
-
-func NewInvalidPasswordError(op, message string) *AppError {
-	return &AppError{Err: ErrInvalidPassword, Op: op, Message: message}
+func NewBadRequestError(op, message string) *AppError {
+	return &AppError{Err: ErrBadRequest, Op: op, Message: message}
 }
