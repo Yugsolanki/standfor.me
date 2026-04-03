@@ -1,0 +1,3 @@
+-- Extensions and shared functions are treated as permanent DB infrastructure.
+-- They are intentionally not dropped in down migrations to prevent dependency errors
+-- during partial rollbacks or local development.
