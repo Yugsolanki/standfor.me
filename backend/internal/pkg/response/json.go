@@ -110,6 +110,38 @@ func JSONError(w http.ResponseWriter, r *http.Request, err error) {
 	handleUnknownError(w, r, err, requestID)
 }
 
+// JSONValidationError writes a 422 Unprocessable Entity response for validation failures.
+// It accepts the field-level errors map returned by validator.Validate() and wraps them
+// into the standard ErrorResponse envelope.
+//
+// Usage:
+//
+//	if errs := s.validator.Validate(body); errs != nil {
+//	    response.JSONValidationError(w, r, errs)
+//	    return
+//	}
+func JSONValidationError(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	ctx := r.Context()
+	requestID := requestid.GetRequestID(ctx)
+
+	logger.AddFields(ctx, map[string]any{
+		"error":         "validation failed",
+		"error_type":    "VALIDATION_ERROR",
+		"error_status":  http.StatusUnprocessableEntity,
+		"error_details": errors,
+	})
+
+	writeJSON(w, r, http.StatusUnprocessableEntity, ErrorResponse{
+		Success:   false,
+		RequestID: requestID,
+		Error: ErrBody{
+			Message: "Validation failed. Please check the errors and try again.",
+			Code:    "VALIDATION_ERROR",
+			Details: errors,
+		},
+	})
+}
+
 // handleContextError processes context-related errors (timeout, cancellation)
 func handleContextError(w http.ResponseWriter, r *http.Request, ctxErr, originalErr error, requestID string) {
 	ctx := r.Context()
