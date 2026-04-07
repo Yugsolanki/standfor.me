@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/Yugsolanki/standfor-me/internal/domain"
 	"github.com/google/uuid"
@@ -24,28 +23,6 @@ func NewRefreshTokenRepository(db *sqlx.DB) *RefreshTokenRepository {
 	return &RefreshTokenRepository{db: db}
 }
 
-// refreshTokenRow is the sqlx scan target that mirrors the
-// refresh_tokens table columns exactly.
-type refreshTokenRow struct {
-	ID        uuid.UUID  `db:"id"`
-	UserID    uuid.UUID  `db:"user_id"`
-	TokenHash string     `db:"token_hash"`
-	ExpiresAt time.Time  `db:"expires_at"`
-	CreatedAt time.Time  `db:"created_at"`
-	RevokedAt *time.Time `db:"revoked_at"`
-}
-
-func (row *refreshTokenRow) toDomain() *domain.RefreshToken {
-	return &domain.RefreshToken{
-		ID:        row.ID,
-		UserID:    row.UserID,
-		TokenHash: row.TokenHash,
-		ExpiresAt: row.ExpiresAt,
-		CreatedAt: row.CreatedAt,
-		RevokedAt: row.RevokedAt,
-	}
-}
-
 // Create persists a new refresh token record.
 func (r *RefreshTokenRepository) Create(ctx context.Context, params domain.CreateRefreshTokenParams) (*domain.RefreshToken, error) {
 	const op = "RefreshTokenRepository.Create"
@@ -58,7 +35,7 @@ func (r *RefreshTokenRepository) Create(ctx context.Context, params domain.Creat
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, user_id, token_hash, expires_at, revoked_at, created_at`
 
-	var record refreshTokenRow
+	var record domain.RefreshToken
 	err := r.db.QueryRowxContext(ctx, query,
 		params.ID,
 		params.UserID,
@@ -69,7 +46,7 @@ func (r *RefreshTokenRepository) Create(ctx context.Context, params domain.Creat
 		return nil, domain.NewInternalError(op, err)
 	}
 
-	return record.toDomain(), nil
+	return &record, nil
 }
 
 // FindByTokenHash looks up an active (non-revoked, non-expired)
@@ -88,7 +65,7 @@ func (r *RefreshTokenRepository) FindByTokenHash(ctx context.Context, hash strin
 			AND revoked_at IS NULL
 			AND expires_at > NOW()`
 
-	var row refreshTokenRow
+	var row domain.RefreshToken
 	if err := r.db.GetContext(ctx, &row, query, hash); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrNotFound
@@ -96,7 +73,7 @@ func (r *RefreshTokenRepository) FindByTokenHash(ctx context.Context, hash strin
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return row.toDomain(), nil
+	return &row, nil
 }
 
 // Revoke marks a single token as revoked using its hash.
