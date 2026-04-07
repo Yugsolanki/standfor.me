@@ -56,7 +56,7 @@ type User struct {
 
 // CreateUserParams holds the required fields for creating a new user.
 type CreateUserParams struct {
-	Username     string `db:"username"      validate:"required,min=3,max=30,alphanum"`
+	Username     string `db:"username"      validate:"required,min=3,max=30,username"`
 	Email        string `db:"email"         validate:"required,email,max=255"`
 	PasswordHash string `db:"password_hash" validate:"required"`
 	DisplayName  string `db:"display_name"  validate:"required,min=3,max=50"`
@@ -75,7 +75,7 @@ type UpdateUserParams struct {
 
 // UpdateUsernameParams holds the required fields for updating a username.
 type UpdateUsernameParams struct {
-	Username string `db:"username" validate:"required,min=3,max=30,alphanum"`
+	Username string `db:"username" validate:"required,min=3,max=30,username"`
 }
 
 // UpdateRoleParams holds the required fields for updating a role.
