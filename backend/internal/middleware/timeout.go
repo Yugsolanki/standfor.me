@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 // Timeout wraps each request with a context deadline. If the handler
@@ -69,14 +70,14 @@ func Timeout(duration time.Duration) func(http.Handler) http.Handler {
 				// Timeout exceeded
 				tw.mu.Lock()
 				tw.timedOut = true
-				requestID := tw.header.Get(RequestIDHeader)
+				requestID := tw.header.Get(requestid.RequestIDHeader)
 				tw.mu.Unlock()
 
 				logger.AddField(r.Context(), "timeout", true)
 				logger.AddField(r.Context(), "timeout_duration", duration.String())
 
 				w.Header().Set("Content-Type", "application/json")
-				w.Header().Set(RequestIDHeader, requestID)
+				w.Header().Set(requestid.RequestIDHeader, requestID)
 				w.Header().Set("Connection", "close")
 				w.WriteHeader(http.StatusGatewayTimeout)
 

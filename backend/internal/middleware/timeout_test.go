@@ -8,6 +8,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 func TestTimeout_HandlerCompletesInTime(t *testing.T) {
@@ -169,12 +171,12 @@ func TestTimeout_RequestIDPropagated(t *testing.T) {
 	wrapped := Timeout(timeout)(RequestID(nextHandler))
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(RequestIDHeader, "test-request-id")
+	req.Header.Set(requestid.RequestIDHeader, "test-request-id")
 	rec := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rec, req)
 
-	if rec.Header().Get(RequestIDHeader) != "test-request-id" {
+	if rec.Header().Get(requestid.RequestIDHeader) != "test-request-id" {
 		t.Error("expected request ID to be propagated in timeout response")
 	}
 

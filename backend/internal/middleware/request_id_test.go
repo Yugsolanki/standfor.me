@@ -6,14 +6,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 	"github.com/google/uuid"
 )
+
+type requestIDKey struct{}
 
 func TestRequestID_GeneratesNewID(t *testing.T) {
 	handlerCalled := false
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handlerCalled = true
-		id := GetRequestID(r.Context())
+		id := requestid.GetRequestID(r.Context())
 		if id == "" {
 			t.Error("expected request ID to be set in context")
 		}
@@ -33,7 +36,7 @@ func TestRequestID_GeneratesNewID(t *testing.T) {
 		t.Error("next handler was not called")
 	}
 
-	respID := rec.Header().Get(RequestIDHeader)
+	respID := rec.Header().Get(requestid.RequestIDHeader)
 	if respID == "" {
 		t.Error("expected X-Request-ID header in response")
 	}
@@ -43,7 +46,7 @@ func TestRequestID_UsesExistingHeader(t *testing.T) {
 	expectedID := "existing-request-id-12345"
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := GetRequestID(r.Context())
+		id := requestid.GetRequestID(r.Context())
 		if id != expectedID {
 			t.Errorf("expected %q, got %q", expectedID, id)
 		}
@@ -52,12 +55,12 @@ func TestRequestID_UsesExistingHeader(t *testing.T) {
 	wrapped := RequestID(nextHandler)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(RequestIDHeader, expectedID)
+	req.Header.Set(requestid.RequestIDHeader, expectedID)
 	rec := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rec, req)
 
-	respID := rec.Header().Get(RequestIDHeader)
+	respID := rec.Header().Get(requestid.RequestIDHeader)
 	if respID != expectedID {
 		t.Errorf("expected response header %q, got %q", expectedID, respID)
 	}
@@ -69,12 +72,12 @@ func TestRequestID_EmptyHeaderGeneratesNew(t *testing.T) {
 	wrapped := RequestID(nextHandler)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(RequestIDHeader, "")
+	req.Header.Set(requestid.RequestIDHeader, "")
 	rec := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rec, req)
 
-	respID := rec.Header().Get(RequestIDHeader)
+	respID := rec.Header().Get(requestid.RequestIDHeader)
 	if respID == "" {
 		t.Error("expected request ID to be generated for empty header")
 	}
@@ -93,7 +96,7 @@ func TestRequestID_SetsResponseHeader(t *testing.T) {
 
 	wrapped.ServeHTTP(rec, req)
 
-	if rec.Header().Get(RequestIDHeader) == "" {
+	if rec.Header().Get(requestid.RequestIDHeader) == "" {
 		t.Error("expected X-Request-ID header to be set on response")
 	}
 }
@@ -102,13 +105,13 @@ func TestRequestID_ContextPropagation(t *testing.T) {
 	var capturedID string
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		capturedID = GetRequestID(r.Context())
+		capturedID = requestid.GetRequestID(r.Context())
 	})
 
 	wrapped := RequestID(nextHandler)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(RequestIDHeader, "test-id-context-123")
+	req.Header.Set(requestid.RequestIDHeader, "test-id-context-123")
 	rec := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rec, req)
@@ -120,7 +123,7 @@ func TestRequestID_ContextPropagation(t *testing.T) {
 
 func TestGetRequestID_EmptyContext(t *testing.T) {
 	ctx := context.Background()
-	id := GetRequestID(ctx)
+	id := requestid.GetRequestID(ctx)
 	if id != "" {
 		t.Errorf("expected empty string for empty context, got %q", id)
 	}
@@ -128,7 +131,7 @@ func TestGetRequestID_EmptyContext(t *testing.T) {
 
 func TestGetRequestID_NonStringValue(t *testing.T) {
 	ctx := context.WithValue(context.Background(), requestIDKey{}, 12345)
-	id := GetRequestID(ctx)
+	id := requestid.GetRequestID(ctx)
 	if id != "" {
 		t.Errorf("expected empty string for non-string value, got %q", id)
 	}
@@ -136,7 +139,7 @@ func TestGetRequestID_NonStringValue(t *testing.T) {
 
 func TestGetRequestID_NilValue(t *testing.T) {
 	ctx := context.WithValue(context.Background(), requestIDKey{}, nil)
-	id := GetRequestID(ctx)
+	id := requestid.GetRequestID(ctx)
 	if id != "" {
 		t.Errorf("expected empty string for nil value, got %q", id)
 	}
@@ -155,7 +158,7 @@ func TestRequestID_MultipleRequests(t *testing.T) {
 
 		wrapped.ServeHTTP(rec, req)
 
-		id := rec.Header().Get(RequestIDHeader)
+		id := rec.Header().Get(requestid.RequestIDHeader)
 		if id == "" {
 			t.Errorf("request %d: expected request ID", i)
 		}
@@ -174,14 +177,14 @@ func TestRequestID_ChainedMiddleware(t *testing.T) {
 
 	firstMiddleware := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			firstID = GetRequestID(r.Context())
+			firstID = requestid.GetRequestID(r.Context())
 			next.ServeHTTP(w, r)
 		})
 	}
 
 	secondMiddleware := func(_ http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			secondID = GetRequestID(r.Context())
+			secondID = requestid.GetRequestID(r.Context())
 			w.WriteHeader(http.StatusOK)
 		})
 	}
@@ -214,7 +217,7 @@ func TestRequestID_VariousHTTPMethods(t *testing.T) {
 
 		wrapped.ServeHTTP(rec, req)
 
-		if rec.Header().Get(RequestIDHeader) == "" {
+		if rec.Header().Get(requestid.RequestIDHeader) == "" {
 			t.Errorf("method %s: expected request ID header", method)
 		}
 	}
@@ -222,14 +225,14 @@ func TestRequestID_VariousHTTPMethods(t *testing.T) {
 
 func TestRequestID_RequestWithBody(t *testing.T) {
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := GetRequestID(r.Context())
+		id := requestid.GetRequestID(r.Context())
 		w.Header().Set("X-Handler-ID", id)
 	})
 
 	wrapped := RequestID(nextHandler)
 
 	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set(RequestIDHeader, "body-request-id")
+	req.Header.Set(requestid.RequestIDHeader, "body-request-id")
 	rec := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rec, req)

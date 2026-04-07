@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 const maxStackSize = 1024 * 32 // 32KB
@@ -32,7 +33,7 @@ func Recoverer(log *slog.Logger) func(http.Handler) http.Handler {
 			defer func() {
 				if rec := recover(); rec != nil {
 					ctx := r.Context()
-					requestID := GetRequestID(ctx)
+					requestID := requestid.GetRequestID(ctx)
 					stack := string(debug.Stack())
 
 					if len(stack) > maxStackSize {
@@ -53,7 +54,7 @@ func Recoverer(log *slog.Logger) func(http.Handler) http.Handler {
 
 					// Respond with a safe error message
 					w.Header().Set("Content-Type", "application/json")
-					w.Header().Set(RequestIDHeader, requestID)
+					w.Header().Set(requestid.RequestIDHeader, requestID)
 					w.WriteHeader(http.StatusInternalServerError)
 
 					body := fmt.Sprintf(

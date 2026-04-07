@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 func testLogger() *slog.Logger {
@@ -225,12 +226,12 @@ func TestRecoverer_RequestIDInResponse(t *testing.T) {
 	wrapped := RequestID(Recoverer(log)(nextHandler))
 
 	req := httptest.NewRequest(http.MethodGet, "/reqid-test", nil)
-	req.Header.Set(RequestIDHeader, "custom-request-id")
+	req.Header.Set(requestid.RequestIDHeader, "custom-request-id")
 	rec := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rec, req)
 
-	if rec.Header().Get(RequestIDHeader) != "custom-request-id" {
+	if rec.Header().Get(requestid.RequestIDHeader) != "custom-request-id" {
 		t.Error("expected request ID in response header")
 	}
 
@@ -256,7 +257,7 @@ func TestRecoverer_NoRequestID(t *testing.T) {
 
 	wrapped.ServeHTTP(rec, req)
 
-	if rec.Header().Get(RequestIDHeader) != "" {
+	if rec.Header().Get(requestid.RequestIDHeader) != "" {
 		t.Error("expected empty request ID header when not set")
 	}
 }
