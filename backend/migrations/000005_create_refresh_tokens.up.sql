@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     revoked_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_refresh_token_hash_length CHECK (char_length(token_hash) > 0)
+    CONSTRAINT chk_refresh_token_hash_length CHECK (char_length(token_hash) > 0),
+    CONSTRAINT chk_refresh_token_expires_at CHECK (expires_at > created_at),
+    CONSTRAINT chk_refresh_token_revoked_at CHECK (revoked_at IS NULL OR revoked_at > created_at)
 );
 
 -- Fast lookup when validating an incoming refresh token.
