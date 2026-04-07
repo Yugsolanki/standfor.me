@@ -20,7 +20,7 @@ func New() *Validator {
 
 func (v *Validator) Validate(data any) map[string]string {
 	err := v.validate.Struct(data)
-	if err != nil {
+	if err == nil {
 		return nil
 	}
 
@@ -62,7 +62,7 @@ func formatError(e validator.FieldError) string {
 
 func RegisterCustomValidators(v *validator.Validate) {
 	// username must be alphanumeric and can contain underscores and hyphens
-	v.RegisterValidation("username", func(fl validator.FieldLevel) bool {
+	_ = v.RegisterValidation("username", func(fl validator.FieldLevel) bool {
 		username := fl.Field().String()
 		matched, _ := regexp.MatchString("^[a-z0-9_-]+$", username)
 		return matched
