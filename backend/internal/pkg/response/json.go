@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/Yugsolanki/standfor-me/internal/domain"
-	"github.com/Yugsolanki/standfor-me/internal/middleware"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 type SuccessResponse struct {
@@ -80,7 +80,7 @@ func JSONMessage(w http.ResponseWriter, r *http.Request, status int, message str
 //	}
 func JSONError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
-	requestID := middleware.GetRequestID(ctx)
+	requestID := requestid.GetRequestID(ctx)
 
 	// 1. Check for context errors first
 	if ctxErr := ctx.Err(); ctxErr != nil {
@@ -301,7 +301,7 @@ func writeJSON(w http.ResponseWriter, r *http.Request, status int, data any) {
 		// Fall back to a safe response.
 		slog.Error("failed to marshal JSON response",
 			"error", err,
-			"request_id", middleware.GetRequestID(r.Context()),
+			"request_id", requestid.GetRequestID(r.Context()),
 		)
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(`{"success":false,"error":{"message":"Internal Server Error","code":"INTERNAL"}}`))
