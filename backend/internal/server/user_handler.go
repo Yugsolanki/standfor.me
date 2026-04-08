@@ -214,8 +214,6 @@ func (s *Server) deleteMeHandler(w http.ResponseWriter, r *http.Request) error {
 // adminGetUserHandler handles GET /api/v1/admin/users/{id}.
 // Moderator+ — returns the full admin view of any user by UUID.
 func (s *Server) adminGetUserHandler(w http.ResponseWriter, r *http.Request) error {
-	const op = "server.adminGetUserHandler"
-
 	id, err := parseUUIDParam(r, "id")
 	if err != nil {
 		return err
@@ -282,8 +280,6 @@ func (s *Server) adminUpdateRoleHandler(w http.ResponseWriter, r *http.Request) 
 // adminUpdateStatusHandler handles PATCH /api/v1/admin/users/{id}/status.
 // Moderator+ — changes a user's account status.
 func (s *Server) adminUpdateStatusHandler(w http.ResponseWriter, r *http.Request) error {
-	const op = "server.adminUpdateStatusHandler"
-
 	id, err := parseUUIDParam(r, "id")
 	if err != nil {
 		return err
@@ -312,8 +308,6 @@ func (s *Server) adminUpdateStatusHandler(w http.ResponseWriter, r *http.Request
 // adminDeleteUserHandler handles DELETE /api/v1/admin/users/{id}.
 // Admin+ — soft-deletes any user account.
 func (s *Server) adminDeleteUserHandler(w http.ResponseWriter, r *http.Request) error {
-	const op = "server.adminDeleteUserHandler"
-
 	id, err := parseUUIDParam(r, "id")
 	if err != nil {
 		return err

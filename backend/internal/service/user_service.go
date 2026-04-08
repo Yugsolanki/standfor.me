@@ -18,7 +18,7 @@ type UserRepository interface {
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	UpdateRole(ctx context.Context, id uuid.UUID, params domain.UpdateRoleParams) (*domain.User, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, params domain.UpdateStatusParams) (*domain.User, error)
-	List(ctx context.Context, params domain.ListUsersParams) ([]domain.User, error)
+	List(ctx context.Context, params domain.ListUsersParams) ([]domain.User, int, error)
 }
 
 type ChangePasswordInput struct {
@@ -40,8 +40,6 @@ func NewUserService(users UserRepository, refreshTokens RefreshTokenStore) *User
 
 // GetByID fetches a user by their UUID.
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	const op = "UserService.GetByID"
-
 	user, err := s.users.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -52,8 +50,6 @@ func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, 
 
 // GetByUsername fetches a user by their username.
 func (s *UserService) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
-	const op = "UserService.GetByUsername"
-
 	user, err := s.users.FindByUsername(ctx, username)
 	if err != nil {
 		return nil, err
@@ -64,8 +60,6 @@ func (s *UserService) GetByUsername(ctx context.Context, username string) (*doma
 
 // GetByEmail fetches a user by their email.
 func (s *UserService) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	const op = "UserService.GetByEmail"
-
 	user, err := s.users.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -76,8 +70,6 @@ func (s *UserService) GetByEmail(ctx context.Context, email string) (*domain.Use
 
 // Update applies a partial update to a user record.
 func (s *UserService) Update(ctx context.Context, id uuid.UUID, params domain.UpdateUserParams) (*domain.User, error) {
-	const op = "UserService.Update"
-
 	user, err := s.users.Update(ctx, id, params)
 	if err != nil {
 		return nil, err
@@ -140,8 +132,6 @@ func (s *UserService) ChangePassword(ctx context.Context, id uuid.UUID, input Ch
 
 // UpdateRole changes a user's role.
 func (s *UserService) UpdateRole(ctx context.Context, id uuid.UUID, role string) (*domain.User, error) {
-	const op = "UserService.UpdateRole"
-
 	user, err := s.users.UpdateRole(ctx, id, domain.UpdateRoleParams{Role: role})
 	if err != nil {
 		return nil, err
@@ -152,8 +142,6 @@ func (s *UserService) UpdateRole(ctx context.Context, id uuid.UUID, role string)
 
 // UpdateStatus changes a user's status.
 func (s *UserService) UpdateStatus(ctx context.Context, id uuid.UUID, status string) (*domain.User, error) {
-	const op = "UserService.UpdateStatus"
-
 	user, err := s.users.UpdateStatus(ctx, id, domain.UpdateStatusParams{Status: status})
 	if err != nil {
 		return nil, err
@@ -164,8 +152,6 @@ func (s *UserService) UpdateStatus(ctx context.Context, id uuid.UUID, status str
 
 // SoftDelete marks a user as deleted and terminates all sessions
 func (s *UserService) SoftDelete(ctx context.Context, id uuid.UUID) error {
-	const op = "UserService.SoftDelete"
-
 	if err := s.users.SoftDelete(ctx, id); err != nil {
 		return err
 	}
