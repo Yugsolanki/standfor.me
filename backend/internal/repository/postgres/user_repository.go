@@ -167,9 +167,9 @@ func (r *UserRepository) Update(ctx context.Context, id uuid.UUID, params domain
 	return &user, nil
 }
 
-// UpdateUsername updates the username of a user.
-func (r *UserRepository) UpdateUsername(ctx context.Context, id uuid.UUID, params domain.UpdateUsernameParams) (*domain.User, error) {
-	const op = "UserRepository.UpdateUsername"
+// ChangeUsername updates the username of a user.
+func (r *UserRepository) ChangeUsername(ctx context.Context, id uuid.UUID, params domain.ChangeUsernameParams) (*domain.User, error) {
+	const op = "UserRepository.ChangeUsername"
 
 	ctx, cancel := context.WithTimeout(ctx, defaultQueryTimeout)
 	defer cancel()
@@ -200,7 +200,7 @@ func (r *UserRepository) UpdateUsername(ctx context.Context, id uuid.UUID, param
 }
 
 // ChangePassword updates only the password hash.
-func (r *UserRepository) ChangePassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
+func (r *UserRepository) ChangePassword(ctx context.Context, id uuid.UUID, params domain.ChangePasswordParams) error {
 	const op = "UserRepository.ChangePassword"
 
 	ctx, cancel := context.WithTimeout(ctx, defaultQueryTimeout)
@@ -211,7 +211,7 @@ func (r *UserRepository) ChangePassword(ctx context.Context, id uuid.UUID, passw
 		SET password_hash = $2
 		WHERE id = $1 AND deleted_at IS NULL`
 
-	result, err := r.db.ExecContext(ctx, query, id, passwordHash)
+	result, err := r.db.ExecContext(ctx, query, id, params.Password)
 	if err != nil {
 		return domain.NewInternalError(op, err)
 	}
