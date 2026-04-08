@@ -10,14 +10,17 @@ import (
 	"github.com/Yugsolanki/standfor-me/internal/config"
 	"github.com/Yugsolanki/standfor-me/internal/middleware"
 	"github.com/Yugsolanki/standfor-me/internal/middleware/ratelimit"
+	internaljwt "github.com/Yugsolanki/standfor-me/internal/pkg/jwt"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/response"
+	appvalidator "github.com/Yugsolanki/standfor-me/internal/pkg/validator"
+	"github.com/Yugsolanki/standfor-me/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/redis/go-redis/v9"
 )
 
 type Services struct {
-	Auth any
-	User any
+	Auth *service.AuthService
+	User *service.UserService
 }
 
 type Server struct {
@@ -28,26 +31,35 @@ type Server struct {
 	http            *http.Server
 	redis           *redis.Client
 	rateLimitConfig *config.RateLimitConfig
+	validator       *appvalidator.Validator
+	jwtSvc          *internaljwt.Service
 }
 
-func New(cfg *config.ServerConfig, logger *slog.Logger, services *Services, redis *redis.Client, rateLimitConfig *config.RateLimitConfig) *Server {
+func New(
+	cfg *config.ServerConfig,
+	logger *slog.Logger,
+	svcs *Services,
+	redisClient *redis.Client,
+	rateLimitConfig *config.RateLimitConfig,
+	validator *appvalidator.Validator,
+	jwtSvc *internaljwt.Service,
+) *Server {
 	s := &Server{
 		cfg:             cfg,
 		logger:          logger,
 		router:          chi.NewRouter(),
-		services:        services,
-		redis:           redis,
+		services:        svcs,
+		redis:           redisClient,
 		rateLimitConfig: rateLimitConfig,
+		validator:       validator,
+		jwtSvc:          jwtSvc,
 	}
-
-	// Build handler structs
 
 	// Wire middleware
 	s.setupMiddleware(cfg)
 
-	// Wire routes
-	s.router.Get("/", s.rootHandler)
-	s.router.Get("/health", s.healthHandler)
+	// Setup routes
+	s.setupRoutes(jwtSvc)
 
 	s.http = &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
