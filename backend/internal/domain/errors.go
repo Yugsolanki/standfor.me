@@ -55,11 +55,11 @@ func NewNotFoundError(op, message string) *AppError {
 	return &AppError{Err: ErrNotFound, Op: op, Message: message}
 }
 
-func NewValidationError(op, message string, details map[string]string) *AppError {
+func NewValidationError(op string, details map[string]string) *AppError {
 	return &AppError{
 		Err:     ErrValidation,
 		Op:      op,
-		Message: message,
+		Message: "Validation failed. Please check your input and try again.",
 		Details: details,
 	}
 }
