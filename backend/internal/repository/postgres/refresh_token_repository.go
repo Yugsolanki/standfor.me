@@ -4,16 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/Yugsolanki/standfor-me/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
-// RefreshTokenRepository handles all persistence operations for
-// refresh tokens. It intentionally has no caching layer because
-// token records must always reflect the ground-truth in Postgres.
+// RefreshTokenRepository handles all persistence operations for refresh tokens.
 type RefreshTokenRepository struct {
 	db *sqlx.DB
 }
@@ -68,9 +65,9 @@ func (r *RefreshTokenRepository) FindByTokenHash(ctx context.Context, hash strin
 	var row domain.RefreshToken
 	if err := r.db.GetContext(ctx, &row, query, hash); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrNotFound
+			return nil, domain.NewNotFoundError(op, "refresh token not found or expired")
 		}
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, domain.NewInternalError(op, err)
 	}
 
 	return &row, nil
@@ -91,7 +88,7 @@ func (r *RefreshTokenRepository) Revoke(ctx context.Context, hash string) error 
 			AND revoked_at IS NULL`
 
 	if _, err := r.db.ExecContext(ctx, query, hash); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return domain.NewInternalError(op, err)
 	}
 
 	return nil
@@ -112,7 +109,7 @@ func (r *RefreshTokenRepository) RevokeAllForUser(ctx context.Context, userID uu
 			AND revoked_at IS NULL`
 
 	if _, err := r.db.ExecContext(ctx, query, userID); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return domain.NewInternalError(op, err)
 	}
 
 	return nil
@@ -133,12 +130,12 @@ func (r *RefreshTokenRepository) DeleteExpired(ctx context.Context) (int64, erro
 
 	result, err := r.db.ExecContext(ctx, query)
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", op, err)
+		return 0, domain.NewInternalError(op, err)
 	}
 
 	n, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("%s: rows affected: %w", op, err)
+		return 0, domain.NewInternalError(op, err)
 	}
 
 	return n, nil
