@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS categories (
     CONSTRAINT chk_description_length CHECK (description IS NULL OR char_length(description) <= 1000),
     CONSTRAINT chk_icon_url_length CHECK (icon_url IS NULL OR char_length(icon_url) <= 2048),
     -- Slug Format Validation
-    CONSTRAINT chk_slug_format CHECK (slug ~* '[a-z0-9]+(-[a-z0-9]+)*$'),
+    CONSTRAINT chk_slug_format CHECK (slug ~ '[a-z0-9]+(-[a-z0-9]+)*$'),
     -- Parent-Child Relationship Validation
     CONSTRAINT chk_no_self_reference CHECK (parent_id IS NULL OR parent_id != id)
 );
