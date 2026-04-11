@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 
     -- Length Constraints
-    CONSTRAINT chk_username_length CHECK (char_length(username) >= 3 AND char_length(username) <= 30),
+    CONSTRAINT chk_username_length CHECK (char_length(username) >= 3 AND char_length(username) <= 44),
     CONSTRAINT chk_email_length CHECK (char_length(email) <= 255),
     CONSTRAINT chk_display_name_length CHECK (char_length(display_name) >= 3 AND char_length(display_name) <= 50),
     CONSTRAINT chk_avatar_url_length CHECK (avatar_url IS NULL OR char_length(avatar_url) <= 2048),
