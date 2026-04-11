@@ -354,22 +354,21 @@ func (r *UserRepository) VerifyEmail(ctx context.Context, id uuid.UUID) error {
 func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	const op = "UserRepository.SoftDelete"
 
-	ctx, cancel := context.WithTimeout(ctx, defaultQueryTimeout)
-	defer cancel()
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return domain.NewInternalError(op, err)
+	}
+	defer tx.Rollback()
 
-	const query = `
-		UPDATE users
-		SET
-			deleted_at = NOW(),
-			status = 'deactivated',
-			profile_visibility = 'private',
-			display_name = 'Deleted User ' || id::text,
-			bio = NULL,
-			avatar_url = NULL,
-			location = NULL
-		WHERE id = $1 AND deleted_at IS NULL`
-
-	result, err := r.db.ExecContext(ctx, query, id)
+	// First reserve the username
+	const reserveQuery = `
+		INSERT INTO reserved_usernames (username, reason)
+		SELECT username, 'deleted_user'
+		FROM users
+		WHERE id = $1 AND deleted_at IS NULL
+		ON CONFLICT (username) DO NOTHING;
+	`
+	result, err := tx.ExecContext(ctx, reserveQuery, id)
 	if err != nil {
 		return domain.NewInternalError(op, err)
 	}
@@ -382,7 +381,39 @@ func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 		return domain.NewNotFoundError(op, "user not found")
 	}
 
-	logger.AddField(ctx, "result_rows_affected", rows)
+	logger.AddField(ctx, "reserved_username_rows_affected", rows)
+
+	// Soft delete the user
+	const updateQuery = `
+		UPDATE users
+		SET
+			deleted_at = NOW(),
+			status = 'deactivated',
+			profile_visibility = 'private',
+			display_name = 'Deleted User ' || id::text,
+			bio = NULL,
+			avatar_url = NULL,
+			location = NULL
+		WHERE id = $1 AND deleted_at IS NULL`
+
+	result, err = tx.ExecContext(ctx, updateQuery, id)
+	if err != nil {
+		return domain.NewInternalError(op, err)
+	}
+
+	rows, err = result.RowsAffected()
+	if err != nil {
+		return domain.NewInternalError(op, err)
+	}
+	if rows == 0 {
+		return domain.NewNotFoundError(op, "user not found")
+	}
+
+	logger.AddField(ctx, "soft_delete_result_rows_affected", rows)
+
+	if err = tx.Commit(); err != nil {
+		return domain.NewInternalError(op, err)
+	}
 
 	return nil
 }
@@ -427,6 +458,7 @@ func (r *UserRepository) AnonymizeExpired(ctx context.Context) (int64, error) {
 	const query = `
 		UPDATE users
 		SET
+			username = 'deleted_' || id::text,
 			password_hash = NULL,
 			email = 'deleted_' || id::text || '@deleted.invalid',
 			email_verified_at = NULL,
@@ -540,6 +572,7 @@ func (r *UserRepository) Count(ctx context.Context) (int, error) {
 // --- Existence Checks ---
 
 // UsernameExists returns true if a non-deleted user with the given username exists.
+// Also checks if the username is reserved and returns an error if it is.
 func (r *UserRepository) UsernameExists(ctx context.Context, username string) (bool, error) {
 	const op = "UserRepository.UsernameExists"
 
@@ -547,7 +580,16 @@ func (r *UserRepository) UsernameExists(ctx context.Context, username string) (b
 	defer cancel()
 
 	query := `
-		SELECT EXISTS (SELECT 1 FROM users WHERE username = $1 AND deleted_at IS NULL)`
+		SELECT EXISTS (
+			SELECT 1 FROM users
+			WHERE username = $1 
+			AND deleted_at IS NULL
+		) OR EXISTS (
+			SELECT 1 FROM reserved_usernames
+			WHERE username = $1
+			AND released_at IS NULL
+		)
+	`
 
 	var exists bool
 	err := r.db.QueryRowxContext(ctx, query, username).Scan(&exists)
