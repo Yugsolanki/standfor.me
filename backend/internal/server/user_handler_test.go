@@ -433,3 +433,59 @@ func TestChangePasswordHandler_InvalidBody(t *testing.T) {
 
 	require.Error(t, err)
 }
+
+func TestAdminListUsersHandler_NoAuth(t *testing.T) {
+	validator := appvalidator.New()
+	s := &Server{
+		services:  &Services{User: nil},
+		validator: validator,
+	}
+
+	r := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users", nil)
+	r = r.WithContext(context.Background())
+	w := httptest.NewRecorder()
+
+	err := s.adminListUsersHandler(w, r)
+
+	require.Error(t, err)
+	appErr, ok := err.(*domain.AppError)
+	require.True(t, ok)
+	assert.Equal(t, domain.ErrUnauthorized, appErr.Err)
+}
+
+func TestAdminListUsersHandler_NonAdmin(t *testing.T) {
+	validator := appvalidator.New()
+	s := &Server{
+		services:  &Services{User: nil},
+		validator: validator,
+	}
+
+	r := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users", nil)
+	r = r.WithContext(context.Background())
+	w := httptest.NewRecorder()
+
+	err := s.adminListUsersHandler(w, r)
+
+	require.Error(t, err)
+	appErr, ok := err.(*domain.AppError)
+	require.True(t, ok)
+	assert.Equal(t, domain.ErrUnauthorized, appErr.Err)
+}
+
+func TestAdminListUsersHandler_ModeratorForbidden(t *testing.T) {
+	validator := appvalidator.New()
+	s := &Server{
+		services:  &Services{User: nil},
+		validator: validator,
+	}
+
+	r := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users", nil)
+	w := httptest.NewRecorder()
+
+	err := s.adminListUsersHandler(w, r)
+
+	require.Error(t, err)
+	appErr, ok := err.(*domain.AppError)
+	require.True(t, ok)
+	assert.Equal(t, domain.ErrUnauthorized, appErr.Err)
+}

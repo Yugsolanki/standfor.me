@@ -109,6 +109,9 @@ func (m *userRepoMock) UpdateLastLogin(ctx context.Context, id uuid.UUID) error 
 
 func (m *userRepoMock) List(ctx context.Context, params domain.ListUsersParams) ([]domain.User, int, error) {
 	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
 	return args.Get(0).([]domain.User), args.Int(1), args.Error(2)
 }
 
@@ -804,4 +807,86 @@ func TestUserService_ChangePassword_EmptyNewPassword(t *testing.T) {
 
 func ptr[T any](v T) *T {
 	return &v
+}
+
+func TestUserService_List_Success(t *testing.T) {
+	ctx := context.Background()
+	userRepo := new(userRepoMock)
+	refreshTokens := new(userSvcRefreshTokenMock)
+	svc := NewUserService(userRepo, refreshTokens)
+
+	params := domain.ListUsersParams{Limit: 10, Offset: 0}
+	users := []domain.User{
+		{ID: uuid.New(), Username: "user1", DisplayName: "User One"},
+		{ID: uuid.New(), Username: "user2", DisplayName: "User Two"},
+	}
+	total := 2
+
+	userRepo.On("List", ctx, params).Return(users, total, nil)
+
+	result, gotTotal, err := svc.List(ctx, params)
+
+	require.NoError(t, err)
+	assert.Len(t, result, 2)
+	assert.Equal(t, total, gotTotal)
+	assert.Equal(t, "user1", result[0].Username)
+	userRepo.AssertExpectations(t)
+}
+
+func TestUserService_List_Empty(t *testing.T) {
+	ctx := context.Background()
+	userRepo := new(userRepoMock)
+	refreshTokens := new(userSvcRefreshTokenMock)
+	svc := NewUserService(userRepo, refreshTokens)
+
+	params := domain.ListUsersParams{Limit: 10, Offset: 0}
+	users := []domain.User{}
+	total := 0
+
+	userRepo.On("List", ctx, params).Return(users, total, nil)
+
+	result, gotTotal, err := svc.List(ctx, params)
+
+	require.NoError(t, err)
+	assert.Len(t, result, 0)
+	assert.Equal(t, 0, gotTotal)
+}
+
+func TestUserService_List_WithPagination(t *testing.T) {
+	ctx := context.Background()
+	userRepo := new(userRepoMock)
+	refreshTokens := new(userSvcRefreshTokenMock)
+	svc := NewUserService(userRepo, refreshTokens)
+
+	params := domain.ListUsersParams{Limit: 5, Offset: 10}
+	users := []domain.User{
+		{ID: uuid.New(), Username: "user11"},
+		{ID: uuid.New(), Username: "user12"},
+	}
+	total := 100
+
+	userRepo.On("List", ctx, params).Return(users, total, nil)
+
+	result, gotTotal, err := svc.List(ctx, params)
+
+	require.NoError(t, err)
+	assert.Len(t, result, 2)
+	assert.Equal(t, 100, gotTotal)
+}
+
+func TestUserService_List_RepoError(t *testing.T) {
+	ctx := context.Background()
+	userRepo := new(userRepoMock)
+	refreshTokens := new(userSvcRefreshTokenMock)
+	svc := NewUserService(userRepo, refreshTokens)
+
+	params := domain.ListUsersParams{Limit: 10, Offset: 0}
+
+	userRepo.On("List", ctx, params).Return(nil, 0, domain.ErrInternal)
+
+	result, gotTotal, err := svc.List(ctx, params)
+
+	assert.Nil(t, result)
+	assert.Equal(t, 0, gotTotal)
+	assert.ErrorIs(t, err, domain.ErrInternal)
 }
