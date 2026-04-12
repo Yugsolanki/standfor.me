@@ -5,6 +5,7 @@ import (
 
 	"github.com/Yugsolanki/standfor-me/internal/domain"
 	"github.com/Yugsolanki/standfor-me/internal/middleware"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/pagination"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/response"
 	"github.com/Yugsolanki/standfor-me/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -209,7 +210,42 @@ func (s *Server) deleteMeHandler(w http.ResponseWriter, r *http.Request) error {
 
 // --- Admin Handler
 
-// TODO: adminListUserHandler
+// adminListUserHandler handles GET /api/v1/admin/users.
+func (s *Server) adminListUsersHandler(w http.ResponseWriter, r *http.Request) error {
+	const op = "server.adminListUsersHandler"
+
+	claims := middleware.ClaimsFromContext(r.Context())
+	if claims == nil {
+		return domain.NewUnauthorizedError(op, "authentication required")
+	}
+
+	if claims.Role != domain.RoleAdmin && claims.Role != domain.RoleSuperAdmin {
+		return domain.NewForbiddenError(op, "only admins and superadmins can list users")
+	}
+
+	p := pagination.FromRequest(r)
+
+	userSvc := s.services.User
+
+	users, total, err := userSvc.List(r.Context(), domain.ListUsersParams{
+		Limit:  p.Limit(),
+		Offset: p.Offset(),
+	})
+	if err != nil {
+		return err
+	}
+
+	items := make([]adminUserResponse, len(users))
+	for i := range users {
+		items[i] = toAdminUserResponse(&users[i])
+	}
+
+	paginatedResponse := pagination.NewResponse(items, p, int64(total))
+
+	response.JSON(w, r, http.StatusOK, paginatedResponse)
+
+	return nil
+}
 
 // adminGetUserHandler handles GET /api/v1/admin/users/{id}.
 // Moderator+ — returns the full admin view of any user by UUID.
