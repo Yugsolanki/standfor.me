@@ -52,7 +52,7 @@ func (s *Server) setupRoutes(jwtSvc *internaljwt.Service) {
 			// Moderator+ — read access and status changes
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireMinRole(domain.RoleModerator))
-				// TODO: r.Get("/users", s.handle(s.adminListUsersHandler))
+				r.Get("/users", s.handle(s.adminListUsersHandler))
 				r.Get("/users/{id}", s.handle(s.adminGetUserHandler))
 				r.Patch("/users/{id}/status", s.handle(s.adminUpdateStatusHandler))
 			})
