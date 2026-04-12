@@ -160,3 +160,13 @@ func (s *UserService) SoftDelete(ctx context.Context, id uuid.UUID) error {
 
 	return nil
 }
+
+// List returns a paginated slice of non-deleted users ordered by creation date (newest first),
+func (s *UserService) List(ctx context.Context, params domain.ListUsersParams) ([]domain.User, int, error) {
+	users, total, err := s.users.List(ctx, params)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
+}
