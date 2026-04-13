@@ -39,7 +39,7 @@ func (c *ConditionalLimiter) AddRule(match MatchFunc, limiter *RateLimiter) *Con
 // Handler returns an http.Handler that applies the conditional rate limiting.
 func (c *ConditionalLimiter) Handler(next http.Handler) http.Handler {
 	// If no default limiter is provided, use the next handler directly.
-	var defaultHandler http.Handler = next
+	defaultHandler := next
 	if c.defaultLimiter != nil {
 		defaultHandler = c.defaultLimiter.Handler(next)
 	}
