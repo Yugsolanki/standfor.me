@@ -358,7 +358,11 @@ func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return domain.NewInternalError(op, err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			slog.Error("rollback failed", "error", err)
+		}
+	}()
 
 	// First reserve the username
 	const reserveQuery = `
