@@ -38,8 +38,6 @@ func cleanupTestUserForRefresh(t *testing.T, db *sqlx.DB, userID uuid.UUID) {
 }
 
 func TestRefreshTokenRepository_Create(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -63,8 +61,6 @@ func TestRefreshTokenRepository_Create(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_Create_InternalError(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -80,8 +76,6 @@ func TestRefreshTokenRepository_Create_InternalError(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_FindByTokenHash(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -107,8 +101,6 @@ func TestRefreshTokenRepository_FindByTokenHash(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_FindByTokenHash_NotFound(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -119,8 +111,6 @@ func TestRefreshTokenRepository_FindByTokenHash_NotFound(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_FindByTokenHash_Expired(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -146,8 +136,6 @@ func TestRefreshTokenRepository_FindByTokenHash_Expired(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_FindByTokenHash_Revoked(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -175,8 +163,6 @@ func TestRefreshTokenRepository_FindByTokenHash_Revoked(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_Revoke(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -203,8 +189,6 @@ func TestRefreshTokenRepository_Revoke(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_Revoke_NonExistent(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -214,8 +198,6 @@ func TestRefreshTokenRepository_Revoke_NonExistent(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_RevokeAllForUser(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -258,8 +240,6 @@ func TestRefreshTokenRepository_RevokeAllForUser(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_DeleteExpired(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 
@@ -318,8 +298,6 @@ func TestRefreshTokenRepository_DeleteExpired(t *testing.T) {
 }
 
 func TestRefreshTokenRepository_DeleteExpired_NothingToDelete(t *testing.T) {
-	
-
 	db := getTestDB(t)
 	repo := NewRefreshTokenRepository(db)
 

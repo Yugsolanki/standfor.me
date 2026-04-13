@@ -33,7 +33,6 @@ func cleanupTestUser(t *testing.T, db *sqlx.DB, userID uuid.UUID) {
 }
 
 func TestUserRepository_Create(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -62,7 +61,6 @@ func TestUserRepository_Create(t *testing.T) {
 }
 
 func TestUserRepository_Create_DuplicateUsername(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -92,7 +90,6 @@ func TestUserRepository_Create_DuplicateUsername(t *testing.T) {
 }
 
 func TestUserRepository_Create_DuplicateEmail(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -122,7 +119,6 @@ func TestUserRepository_Create_DuplicateEmail(t *testing.T) {
 }
 
 func TestUserRepository_FindByID(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -138,7 +134,6 @@ func TestUserRepository_FindByID(t *testing.T) {
 }
 
 func TestUserRepository_FindByID_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -149,7 +144,6 @@ func TestUserRepository_FindByID_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_FindByUsername(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -164,7 +158,6 @@ func TestUserRepository_FindByUsername(t *testing.T) {
 }
 
 func TestUserRepository_FindByUsername_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -175,7 +168,6 @@ func TestUserRepository_FindByUsername_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_FindByEmail(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -190,7 +182,6 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 }
 
 func TestUserRepository_FindByEmail_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -201,7 +192,6 @@ func TestUserRepository_FindByEmail_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_Update(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -226,7 +216,6 @@ func TestUserRepository_Update(t *testing.T) {
 }
 
 func TestUserRepository_Update_PartialUpdate(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -247,7 +236,6 @@ func TestUserRepository_Update_PartialUpdate(t *testing.T) {
 }
 
 func TestUserRepository_Update_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -261,7 +249,6 @@ func TestUserRepository_Update_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_ChangeUsername(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -280,7 +267,6 @@ func TestUserRepository_ChangeUsername(t *testing.T) {
 }
 
 func TestUserRepository_ChangeUsername_Duplicate(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -299,7 +285,6 @@ func TestUserRepository_ChangeUsername_Duplicate(t *testing.T) {
 }
 
 func TestUserRepository_ChangePassword(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -318,7 +303,6 @@ func TestUserRepository_ChangePassword(t *testing.T) {
 }
 
 func TestUserRepository_ChangePassword_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -331,7 +315,6 @@ func TestUserRepository_ChangePassword_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_UpdateRole(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -348,7 +331,6 @@ func TestUserRepository_UpdateRole(t *testing.T) {
 }
 
 func TestUserRepository_UpdateRole_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -361,7 +343,6 @@ func TestUserRepository_UpdateRole_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_UpdateStatus(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -378,7 +359,6 @@ func TestUserRepository_UpdateStatus(t *testing.T) {
 }
 
 func TestUserRepository_UpdateStatus_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -391,7 +371,6 @@ func TestUserRepository_UpdateStatus_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_UpdateLastLogin(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -413,7 +392,6 @@ func TestUserRepository_UpdateLastLogin(t *testing.T) {
 }
 
 func TestUserRepository_UpdateLastLogin_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -424,7 +402,6 @@ func TestUserRepository_UpdateLastLogin_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_VerifyEmail(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -442,7 +419,6 @@ func TestUserRepository_VerifyEmail(t *testing.T) {
 }
 
 func TestUserRepository_VerifyEmail_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -453,7 +429,6 @@ func TestUserRepository_VerifyEmail_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_SoftDelete(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -470,7 +445,6 @@ func TestUserRepository_SoftDelete(t *testing.T) {
 }
 
 func TestUserRepository_SoftDelete_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -481,7 +455,6 @@ func TestUserRepository_SoftDelete_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_Restore(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -500,7 +473,6 @@ func TestUserRepository_Restore(t *testing.T) {
 }
 
 func TestUserRepository_Restore_Expired(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -519,7 +491,6 @@ func TestUserRepository_Restore_Expired(t *testing.T) {
 }
 
 func TestUserRepository_Restore_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -530,7 +501,6 @@ func TestUserRepository_Restore_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_HardDelete(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -549,7 +519,6 @@ func TestUserRepository_HardDelete(t *testing.T) {
 }
 
 func TestUserRepository_HardDelete_NotSoftDeleted(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -563,7 +532,6 @@ func TestUserRepository_HardDelete_NotSoftDeleted(t *testing.T) {
 }
 
 func TestUserRepository_List(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -583,7 +551,6 @@ func TestUserRepository_List(t *testing.T) {
 }
 
 func TestUserRepository_List_Empty(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -603,7 +570,6 @@ func TestUserRepository_List_Empty(t *testing.T) {
 }
 
 func TestUserRepository_List_Pagination(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -630,7 +596,6 @@ func TestUserRepository_List_Pagination(t *testing.T) {
 }
 
 func TestUserRepository_Count(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -644,7 +609,6 @@ func TestUserRepository_Count(t *testing.T) {
 }
 
 func TestUserRepository_UsernameExists(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -658,7 +622,6 @@ func TestUserRepository_UsernameExists(t *testing.T) {
 }
 
 func TestUserRepository_UsernameExists_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -669,7 +632,6 @@ func TestUserRepository_UsernameExists_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_EmailExists(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -683,7 +645,6 @@ func TestUserRepository_EmailExists(t *testing.T) {
 }
 
 func TestUserRepository_EmailExists_NotFound(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
@@ -694,7 +655,6 @@ func TestUserRepository_EmailExists_NotFound(t *testing.T) {
 }
 
 func TestUserRepository_AnonymizeExpired(t *testing.T) {
-
 	db := getTestDB(t)
 	repo := NewUserRepository(db)
 
