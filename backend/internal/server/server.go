@@ -58,6 +58,13 @@ func New(
 	// Wire middleware
 	s.setupMiddleware(cfg)
 
+	// Setup conditional rate limiters
+	cl, err := s.setupRateLimiters(s.redis, s.logger)
+	if err != nil {
+		return nil
+	}
+	s.router.Use(cl.Handler)
+
 	// Setup routes
 	s.setupRoutes(jwtSvc)
 
