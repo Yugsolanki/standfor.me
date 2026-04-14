@@ -63,6 +63,19 @@ func toAuthUserResponse(u *domain.User) authUserResponse {
 
 // registerHandler handles POST /api/v1/auth/register.
 // Public — creates a new account and returns a token pair.
+//
+//	@Summary		Register a new user
+//	@Description	Creates a new user account and returns access/refresh token pair
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		registerRequest	true	"Registration details"
+//	@Success		201		{object}	authResponse
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		409		{object}	response.ErrorResponse
+//	@Failure		422		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Router			/api/v1/auth/register [post]
 func (s *Server) registerHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.registerHandler"
 
@@ -98,6 +111,18 @@ func (s *Server) registerHandler(w http.ResponseWriter, r *http.Request) error {
 
 // loginHandler handles POST /api/v1/auth/login.
 // Public — validates credentials and returns a token pair.
+//
+//	@Summary		Login user
+//	@Description	Authenticates user with email and password, returns token pair
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		loginRequest	true	"Login credentials"
+//	@Success		200		{object}	authResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		422		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Router			/api/v1/auth/login [post]
 func (s *Server) loginHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.loginHandler"
 
@@ -131,6 +156,18 @@ func (s *Server) loginHandler(w http.ResponseWriter, r *http.Request) error {
 
 // refreshHandler handles POST /api/v1/auth/refresh.
 // Public — rotates a refresh token and returns a new token pair.
+//
+//	@Summary		Refresh tokens
+//	@Description	Rotates a refresh token and returns a new access/refresh token pair
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		refreshRequest	true	"Refresh token"
+//	@Success		200		{object}	authResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		422		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Router			/api/v1/auth/refresh [post]
 func (s *Server) refreshHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.refreshHandler"
 
@@ -157,6 +194,19 @@ func (s *Server) refreshHandler(w http.ResponseWriter, r *http.Request) error {
 
 // logoutHandler handles POST /api/v1/auth/logout.
 // Authenticated — revokes the presented refresh token.
+//
+//	@Summary		Logout user
+//	@Description	Revokes the provided refresh token
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		logoutRequest	true	"Refresh token to revoke"
+//	@Success		200		{object}	response.SuccessResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		422		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Router			/api/v1/auth/logout [post]
 func (s *Server) logoutHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.logoutHandler"
 
@@ -182,6 +232,17 @@ func (s *Server) logoutHandler(w http.ResponseWriter, r *http.Request) error {
 
 // logoutAllHandler handles POST /api/v1/auth/logout-all.
 // Authenticated — revokes all refresh tokens for the caller.
+//
+//	@Summary		Logout all sessions
+//	@Description	Revokes all refresh tokens for the authenticated user
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.SuccessResponse
+//	@Failure		401	{object}	response.ErrorResponse
+//	@Failure		500	{object}	response.ErrorResponse
+//	@Router			/api/v1/auth/logout-all [post]
 func (s *Server) logoutAllHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.logoutAllHandler"
 
@@ -203,6 +264,16 @@ func (s *Server) logoutAllHandler(w http.ResponseWriter, r *http.Request) error 
 
 // meHandler handles GET /api/v1/auth/me.
 // Authenticated — returns the profile of the authenticated user.
+//
+//	@Summary		Get current user
+//	@Description	Returns the profile of the authenticated user
+//	@Tags			auth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	authUserResponse
+//	@Failure		401	{object}	response.ErrorResponse
+//	@Failure		500	{object}	response.ErrorResponse
+//	@Router			/api/v1/auth/me [get]
 func (s *Server) meHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.meHandler"
 

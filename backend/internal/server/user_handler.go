@@ -81,8 +81,19 @@ func toAdminUserResponse(u *domain.User) adminUserResponse {
 // --- Public Helpers
 
 // getUserHandler handles GET /api/v1/users/{username}.
-// Public — returns the public profile of a user by username.
-// Private profiles are visible only to the owner or admin+.
+// Public — anyone can view a user profile, but private profiles are protected.
+//
+//	@Summary		Get user by username
+//	@Description	Get user by username
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			username	path		string	true	"Username"
+//	@Success		200			{object}	publicUserResponse
+//	@Failure		400			{object}	response.ErrorResponse
+//	@Failure		404			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Router			/api/v1/users/{username} [get]
 func (s *Server) getUserHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.getUserHandler"
 
@@ -118,6 +129,19 @@ func (s *Server) getUserHandler(w http.ResponseWriter, r *http.Request) error {
 
 // updateMeHandler handles PATCH /api/v1/users/me.
 // Authenticated — allows a user to update their own profile.
+//
+//	@Summary		Update current user
+//	@Description	Updates the authenticated user's profile settings
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		updateUserRequest	true	"Fields to update"
+//	@Success		200		{object}	publicUserResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		422		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Router			/api/v1/users/me [patch]
 func (s *Server) updateMeHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.updateMeHandler"
 
@@ -156,6 +180,20 @@ func (s *Server) updateMeHandler(w http.ResponseWriter, r *http.Request) error {
 
 // changePasswordHandler handles POST /api/v1/users/me/password.
 // Authenticated — changes the authenticated user's password.
+//
+//	@Summary		Change password
+//	@Description	Changes the authenticated user's password
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		changePasswordRequest	true	"Current and new password"
+//	@Success		200		{object}	response.SuccessResponse
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		422		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Router			/api/v1/users/me/password [post]
 func (s *Server) changePasswordHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.changePasswordHandler"
 
@@ -189,6 +227,17 @@ func (s *Server) changePasswordHandler(w http.ResponseWriter, r *http.Request) e
 
 // deleteMeHandler handles DELETE /api/v1/users/me.
 // Authenticated — soft-deletes the authenticated user's own account.
+//
+//	@Summary		Delete current user
+//	@Description	Soft-deletes the authenticated user's account
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	response.SuccessResponse
+//	@Failure		401	{object}	response.ErrorResponse
+//	@Failure		500	{object}	response.ErrorResponse
+//	@Router			/api/v1/users/me [delete]
 func (s *Server) deleteMeHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.deleteMeHandler"
 
@@ -211,6 +260,19 @@ func (s *Server) deleteMeHandler(w http.ResponseWriter, r *http.Request) error {
 // --- Admin Handler
 
 // adminListUserHandler handles GET /api/v1/admin/users.
+//
+//	@Summary		List all users (admin)
+//	@Description	Returns a paginated list of all users with admin details
+//	@Tags			admin-users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number (default 1)"
+//	@Param			per_page	query		int	false	"Items per page (default 20, max 100)"
+//	@Success		200			{object}	pagination.Response{data=[]adminUserResponse}
+//	@Failure		401			{object}	response.ErrorResponse
+//	@Failure		403			{object}	response.ErrorResponse
+//	@Failure		500			{object}	response.ErrorResponse
+//	@Router			/api/v1/admin/users [get]
 func (s *Server) adminListUsersHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.adminListUsersHandler"
 
@@ -249,6 +311,20 @@ func (s *Server) adminListUsersHandler(w http.ResponseWriter, r *http.Request) e
 
 // adminGetUserHandler handles GET /api/v1/admin/users/{id}.
 // Moderator+ — returns the full admin view of any user by UUID.
+//
+//	@Summary		Get user by ID (admin)
+//	@Description	Returns full admin details for a user by UUID
+//	@Tags			admin-users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"User UUID"
+//	@Success		200	{object}	adminUserResponse
+//	@Failure		400	{object}	response.ErrorResponse
+//	@Failure		401	{object}	response.ErrorResponse
+//	@Failure		403	{object}	response.ErrorResponse
+//	@Failure		404	{object}	response.ErrorResponse
+//	@Failure		500	{object}	response.ErrorResponse
+//	@Router			/api/v1/admin/users/{id} [get]
 func (s *Server) adminGetUserHandler(w http.ResponseWriter, r *http.Request) error {
 	id, err := parseUUIDParam(r, "id")
 	if err != nil {
@@ -269,6 +345,23 @@ func (s *Server) adminGetUserHandler(w http.ResponseWriter, r *http.Request) err
 // adminUpdateRoleHandler handles PATCH /api/v1/admin/users/{id}/role.
 // Admin+ — changes a user's role.
 // Only superadmins may promote to admin or superadmin.
+//
+//	@Summary		Update user role (admin)
+//	@Description	Changes a user's role. Only superadmins can assign admin/superadmin roles
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"User UUID"
+//	@Param			request	body		updateRoleRequest	true	"New role"
+//	@Success		200		{object}	adminUserResponse
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		403		{object}	response.ErrorResponse
+//	@Failure		404		{object}	response.ErrorResponse
+//	@Failure		422		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Router			/api/v1/admin/users/{id}/role [patch]
 func (s *Server) adminUpdateRoleHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.adminUpdateRoleHandler"
 
@@ -315,6 +408,23 @@ func (s *Server) adminUpdateRoleHandler(w http.ResponseWriter, r *http.Request) 
 
 // adminUpdateStatusHandler handles PATCH /api/v1/admin/users/{id}/status.
 // Moderator+ — changes a user's account status.
+//
+//	@Summary		Update user status (admin)
+//	@Description	Changes a user's account status (active, suspended, banned, deactivated)
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"User UUID"
+//	@Param			request	body		updateStatusRequest	true	"New status"
+//	@Success		200		{object}	adminUserResponse
+//	@Failure		400		{object}	response.ErrorResponse
+//	@Failure		401		{object}	response.ErrorResponse
+//	@Failure		403		{object}	response.ErrorResponse
+//	@Failure		404		{object}	response.ErrorResponse
+//	@Failure		422		{object}	response.ErrorResponse
+//	@Failure		500		{object}	response.ErrorResponse
+//	@Router			/api/v1/admin/users/{id}/status [patch]
 func (s *Server) adminUpdateStatusHandler(w http.ResponseWriter, r *http.Request) error {
 	id, err := parseUUIDParam(r, "id")
 	if err != nil {
@@ -343,6 +453,21 @@ func (s *Server) adminUpdateStatusHandler(w http.ResponseWriter, r *http.Request
 
 // adminDeleteUserHandler handles DELETE /api/v1/admin/users/{id}.
 // Admin+ — soft-deletes any user account.
+//
+//	@Summary		Delete user (admin)
+//	@Description	Soft-deletes a user account
+//	@Tags			admin-users
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"User UUID"
+//	@Success		200	{object}	response.SuccessResponse
+//	@Failure		400	{object}	response.ErrorResponse
+//	@Failure		401	{object}	response.ErrorResponse
+//	@Failure		403	{object}	response.ErrorResponse
+//	@Failure		404	{object}	response.ErrorResponse
+//	@Failure		500	{object}	response.ErrorResponse
+//	@Router			/api/v1/admin/users/{id} [delete]
 func (s *Server) adminDeleteUserHandler(w http.ResponseWriter, r *http.Request) error {
 	id, err := parseUUIDParam(r, "id")
 	if err != nil {
