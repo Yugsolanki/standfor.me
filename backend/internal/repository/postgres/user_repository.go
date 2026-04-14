@@ -167,38 +167,6 @@ func (r *UserRepository) Update(ctx context.Context, id uuid.UUID, params domain
 	return &user, nil
 }
 
-// ChangeUsername updates the username of a user.
-func (r *UserRepository) ChangeUsername(ctx context.Context, id uuid.UUID, params domain.ChangeUsernameParams) (*domain.User, error) {
-	const op = "UserRepository.ChangeUsername"
-
-	ctx, cancel := context.WithTimeout(ctx, defaultQueryTimeout)
-	defer cancel()
-
-	const query = `
-		UPDATE users
-		SET
-			username = $2
-		WHERE id = $1 AND deleted_at IS NULL
-		RETURNING *`
-
-	var user domain.User
-	err := r.db.QueryRowxContext(ctx, query,
-		id,
-		params.Username,
-	).StructScan(&user)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.NewNotFoundError(op, "user not found")
-		}
-		if isUniqueViolation(err) {
-			return nil, domain.NewConflictError(op, "a user with this username or email already exists")
-		}
-		return nil, domain.NewInternalError(op, err)
-	}
-
-	return &user, nil
-}
-
 // ChangePassword updates only the password hash.
 func (r *UserRepository) ChangePassword(ctx context.Context, id uuid.UUID, params domain.ChangePasswordParams) error {
 	const op = "UserRepository.ChangePassword"

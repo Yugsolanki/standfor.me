@@ -248,42 +248,6 @@ func TestUserRepository_Update_NotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "not found")
 }
 
-func TestUserRepository_ChangeUsername(t *testing.T) {
-	db := getTestDB(t)
-	repo := NewUserRepository(db)
-
-	createdUser := setupTestUser(t, db)
-	defer cleanupTestUser(t, db, createdUser.ID)
-
-	newUsername := "newusername_" + uuid.New().String()[:8]
-
-	updatedUser, err := repo.ChangeUsername(context.Background(), createdUser.ID, domain.ChangeUsernameParams{
-		Username: newUsername,
-	})
-
-	require.NoError(t, err)
-	require.NotNil(t, updatedUser)
-	assert.Equal(t, newUsername, updatedUser.Username)
-}
-
-func TestUserRepository_ChangeUsername_Duplicate(t *testing.T) {
-	db := getTestDB(t)
-	repo := NewUserRepository(db)
-
-	ctx := context.Background()
-	user1 := setupTestUser(t, db)
-	user2 := setupTestUser(t, db)
-	defer cleanupTestUser(t, db, user1.ID)
-	defer cleanupTestUser(t, db, user2.ID)
-
-	_, err := repo.ChangeUsername(ctx, user1.ID, domain.ChangeUsernameParams{
-		Username: user2.Username,
-	})
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "already exists")
-}
-
 func TestUserRepository_ChangePassword(t *testing.T) {
 	db := getTestDB(t)
 	repo := NewUserRepository(db)

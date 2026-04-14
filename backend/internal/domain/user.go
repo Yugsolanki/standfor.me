@@ -73,11 +73,6 @@ type UpdateUserParams struct {
 	EmbedEnabled      *bool   `db:"embed_enabled" validate:"omitempty"`
 }
 
-// ChangeUsernameParams holds the required fields for updating a username.
-type ChangeUsernameParams struct {
-	Username string `db:"username" validate:"required,min=3,max=30,username"`
-}
-
 // ChangePasswordParams holds the required fields for updating a password.
 type ChangePasswordParams struct {
 	Password string `db:"password" validate:"required,min=8,max=72"`

@@ -60,14 +60,6 @@ func (m *userRepoMock) Update(ctx context.Context, id uuid.UUID, params domain.U
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-func (m *userRepoMock) ChangeUsername(ctx context.Context, id uuid.UUID, params domain.ChangeUsernameParams) (*domain.User, error) {
-	args := m.Called(ctx, id, params)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.User), args.Error(1)
-}
-
 func (m *userRepoMock) ChangePassword(ctx context.Context, id uuid.UUID, params domain.ChangePasswordParams) error {
 	args := m.Called(ctx, id, params)
 	return args.Error(0)
@@ -324,96 +316,6 @@ func TestUserService_Update_Partial(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "Only DisplayName", result.DisplayName)
-	userRepo.AssertExpectations(t)
-}
-
-func TestUserService_ChangeUsername_Success(t *testing.T) {
-	ctx := context.Background()
-	userRepo := new(userRepoMock)
-	refreshTokens := new(userSvcRefreshTokenMock)
-	svc := NewUserService(userRepo, refreshTokens)
-
-	userID := uuid.New()
-	newUsername := "newusername"
-	params := domain.ChangeUsernameParams{Username: newUsername}
-	updatedUser := &domain.User{
-		ID:       userID,
-		Username: newUsername,
-		Role:     domain.RoleUser,
-		Status:   domain.StatusActive,
-	}
-
-	userRepo.On("UsernameExists", ctx, newUsername).Return(false, nil)
-	userRepo.On("ChangeUsername", ctx, userID, params).Return(updatedUser, nil)
-
-	result, err := svc.ChangeUsername(ctx, userID, newUsername)
-
-	require.NoError(t, err)
-	assert.Equal(t, newUsername, result.Username)
-	userRepo.AssertExpectations(t)
-}
-
-func TestUserService_ChangeUsername_Duplicate(t *testing.T) {
-	ctx := context.Background()
-	userRepo := new(userRepoMock)
-	refreshTokens := new(userSvcRefreshTokenMock)
-	svc := NewUserService(userRepo, refreshTokens)
-
-	userID := uuid.New()
-	takenUsername := "takenuser"
-
-	userRepo.On("UsernameExists", ctx, takenUsername).Return(true, nil)
-
-	result, err := svc.ChangeUsername(ctx, userID, takenUsername)
-
-	assert.Nil(t, result)
-	assert.Error(t, err)
-	appErr, ok := err.(*domain.AppError)
-	require.True(t, ok, "expected AppError")
-	assert.Equal(t, domain.ErrConflict, appErr.Err)
-	userRepo.AssertExpectations(t)
-}
-
-func TestUserService_ChangeUsername_EmptySkipsCheck(t *testing.T) {
-	ctx := context.Background()
-	userRepo := new(userRepoMock)
-	refreshTokens := new(userSvcRefreshTokenMock)
-	svc := NewUserService(userRepo, refreshTokens)
-
-	userID := uuid.New()
-	params := domain.ChangeUsernameParams{Username: ""}
-	updatedUser := &domain.User{
-		ID:       userID,
-		Username: "",
-		Role:     domain.RoleUser,
-		Status:   domain.StatusActive,
-	}
-
-	userRepo.On("ChangeUsername", ctx, userID, params).Return(updatedUser, nil)
-
-	result, err := svc.ChangeUsername(ctx, userID, "")
-
-	require.NoError(t, err)
-	userRepo.AssertNotCalled(t, "UsernameExists")
-	assert.Equal(t, "", result.Username)
-}
-
-func TestUserService_ChangeUsername_RepoError(t *testing.T) {
-	ctx := context.Background()
-	userRepo := new(userRepoMock)
-	refreshTokens := new(userSvcRefreshTokenMock)
-	svc := NewUserService(userRepo, refreshTokens)
-
-	userID := uuid.New()
-	params := domain.ChangeUsernameParams{Username: "newuser"}
-
-	userRepo.On("UsernameExists", ctx, "newuser").Return(false, nil)
-	userRepo.On("ChangeUsername", ctx, userID, params).Return(nil, domain.ErrInternal)
-
-	result, err := svc.ChangeUsername(ctx, userID, "newuser")
-
-	assert.Nil(t, result)
-	assert.ErrorIs(t, err, domain.ErrInternal)
 	userRepo.AssertExpectations(t)
 }
 

@@ -13,7 +13,6 @@ type UserRepository interface {
 
 	FindByUsername(ctx context.Context, username string) (*domain.User, error)
 	Update(ctx context.Context, id uuid.UUID, params domain.UpdateUserParams) (*domain.User, error)
-	ChangeUsername(ctx context.Context, id uuid.UUID, params domain.ChangeUsernameParams) (*domain.User, error)
 	ChangePassword(ctx context.Context, id uuid.UUID, params domain.ChangePasswordParams) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	UpdateRole(ctx context.Context, id uuid.UUID, params domain.UpdateRoleParams) (*domain.User, error)
@@ -71,28 +70,6 @@ func (s *UserService) GetByEmail(ctx context.Context, email string) (*domain.Use
 // Update applies a partial update to a user record.
 func (s *UserService) Update(ctx context.Context, id uuid.UUID, params domain.UpdateUserParams) (*domain.User, error) {
 	user, err := s.users.Update(ctx, id, params)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-// ChangeUsername changes users username after verifying if it's available
-func (s *UserService) ChangeUsername(ctx context.Context, id uuid.UUID, username string) (*domain.User, error) {
-	const op = "UserService.ChangeUsername"
-
-	if username != "" {
-		taken, err := s.users.UsernameExists(ctx, username)
-		if err != nil {
-			return nil, err
-		}
-		if taken {
-			return nil, domain.NewConflictError(op, "this username is already taken")
-		}
-	}
-
-	user, err := s.users.ChangeUsername(ctx, id, domain.ChangeUsernameParams{Username: username})
 	if err != nil {
 		return nil, err
 	}
