@@ -8,45 +8,104 @@ Standfor.me is a Golang backend API using chi router, PostgreSQL, and Redis. The
 
 ## Build, Lint, and Test Commands
 
-### Backend (Go)
+The project uses a **Makefile** at the repo root for all common operations. Run `make help` to see all targets.
+
+### Primary Targets
 
 ```bash
-# Navigate to backend
-cd backend
+# Full pipeline: tidy → format → lint → test → build
+make all
 
-# Run the API server
-go run ./cmd/api
+# Hot-reload during development (requires air)
+make run-dev
 
-# Build the binary
-go build -o ./tmp/main ./cmd/api
+# Run linter
+make lint
+
+# Auto-fix lint issues
+make lint-fix
+
+# Format all Go files with gofumpt
+make format
 
 # Run all tests
-go test ./...
-
-# Run a single test (by name)
-go test ./internal/middleware/ratelimit -run TestSlidingWindow_BasicRateLimit
-
-# Run tests with verbose output
-go test -v ./...
+make test
 
 # Run tests with race detector
-go test -race ./...
+make test-race
 
-# Run linter (golangci-lint)
-golangci-lint run
+# Generate test coverage report (HTML)
+make coverage-html
 
-# Run linter on specific file
-golangci-lint run ./internal/config/config.go
+# Run a single test
+make test-one PKG=./internal/middleware/ratelimit NAME=TestSlidingWindow
 
-# Hot reload during development (requires air)
-air
+# Run migrations up / down
+make migrate-up
+make migrate-down
+
+# Create a new migration file
+make migrate-create NAME=create_foo
+
+# Generate Swagger docs
+make swag
+
+# Start infrastructure (postgres + redis)
+make docker-up-infra
+
+# Stop all containers
+make docker-down
 ```
 
-### Database Migrations
+### All Available Make Targets
+
+| Category | Targets |
+|---|---|
+| **Build** | `build` (default), `build-api`, `build-migrate`, `build-worker`, `build-all` |
+| **Run** | `run`, `run-dev` (hot-reload with air) |
+| **Migrations** | `migrate-up`, `migrate-down`, `migrate-status`, `migrate-create NAME=x` |
+| **Tests** | `test`, `test-verbose`, `test-race`, `test-coverage`, `coverage-report`, `coverage-text`, `coverage-html`, `test-one PKG=... NAME=...` |
+| **Lint & Format** | `lint`, `lint-fix`, `format` |
+| **Dependencies** | `tidy`, `deps-update`, `deps-cleanup`, `deps-vuln` (govulncheck) |
+| **Docs** | `swag` |
+| **Docker** | `docker-up`, `docker-up-infra`, `docker-down`, `docker-logs`, `docker-logs-svc SVC=x`, `docker-clean`, `docker-build` |
+| **Release** | `goreleaser-snapshot`, `goreleaser-release` |
+| **Tools** | `install-tools` (golangci-lint, swag, gofumpt, air, goreleaser, govulncheck) |
+| **Other** | `clean`, `all`, `help` |
+
+### Bare Go Commands (Fallback)
+
+If you prefer not to use Make, the equivalent raw commands are:
 
 ```bash
-# Run migrations
+cd backend
+
+# Build
+go build -o ./tmp/main ./cmd/api
+
+# Test
+go test ./...
+go test -v ./internal/middleware/ratelimit -run TestSlidingWindow_BasicRateLimit
+go test -race ./...
+
+# Lint
+golangci-lint run
+golangci-lint run ./internal/config/config.go
+
+# Format
+gofumpt -l -w .
+
+# Modules
+go mod tidy
+
+# Swagger
+swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
+
+# Migrations
 go run ./cmd/migrate
+
+# Hot reload
+air
 ```
 
 ## Code Style Guidelines
@@ -165,21 +224,55 @@ func TestExample(t *testing.T) {
   - Uses Redis DB 15 for tests
   - Skips test if Redis unavailable
 
+### Makefile Workflow
+
+Recommended daily workflow:
+
+1. `make docker-up-infra` — Start Postgres and Redis
+2. `make run-dev` — Start the API with hot-reload
+3. Code your changes
+4. `make format` — Format before reviewing
+5. `make lint` — Catch issues early
+6. `make test-race` — Run tests with race detection
+7. `make migrate-create NAME=xxx` — When schema changes are needed
+8. `make clean` — Remove build artifacts
+
+Before committing:
+
+```bash
+make all   # tidy → format → lint → test → build
+```
+
 ### Project Structure
 
 ```
-backend/
-├── cmd/
-│   ├── api/          # Main API entrypoint
-│   └── migrate/      # Database migrations
-├── internal/
-│   ├── config/       # Configuration loading
-│   ├── domain/       # Domain errors and types
-│   ├── middleware/   # HTTP middleware (ratelimit, security, etc.)
-│   ├── pkg/          # Shared packages (response, validator, crypto)
-│   ├── repository/   # Data access (postgres, redis)
-│   └── server/       # HTTP server setup
-└── tmp/              # Build output (gitignored)
+.
+├── Makefile                  # All build, test, lint, docker targets
+├── docker-compose.yaml       # Postgres, Redis, pgAdmin, RedisInsight
+├── backend/
+│   ├── cmd/
+│   │   ├── api/              # Main API entrypoint
+│   │   ├── migrate/          # Database migration CLI
+│   │   └── worker/           # Asynq background worker
+│   ├── configs/              # Application config files
+│   ├── docs/                 # Swagger-generated API docs
+│   ├── migrations/           # SQL migration files (up/down)
+│   ├── internal/
+│   │   ├── config/           # Configuration loading (viper)
+│   │   ├── domain/           # Domain errors and types
+│   │   ├── middleware/       # HTTP middleware (ratelimit, security, etc.)
+│   │   │   └── ratelimit/   # Redis sliding-window rate limiter
+│   │   ├── pkg/              # Shared packages (response, validator, crypto, jwt, pagination)
+│   │   ├── repository/       # Data access layer
+│   │   │   ├── postgres/    # PostgreSQL repositories
+│   │   │   └── redis/       # Redis client & cache
+│   │   ├── server/           # Chi router & HTTP server setup
+│   │   └── service/          # Business logic (auth, user)
+│   ├── tmp/                  # Build output (gitignored)
+│   ├── go.mod / go.sum
+│   ├── .golangci.yml
+│   └── .air.toml
+└── .env                      # Environment variables
 ```
 
 ### Middleware Order
@@ -199,7 +292,10 @@ When adding middleware to chi router, use this order:
 ### Dependency Management
 
 - Use Go 1.25.5 (per go.mod)
-- Run `go mod tidy` after adding dependencies
+- Run `make tidy` (or `go mod tidy`) after adding dependencies
+- Run `make deps-update` to update all direct dependencies to latest minor/patch
+- Run `make deps-vuln` to scan for known vulnerabilities (govulncheck)
+- Use `make install-tools` to install all dev tools at once
 
 ### Commit Messages
 

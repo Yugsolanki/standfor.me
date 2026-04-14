@@ -58,3 +58,66 @@ Backend: Golang
 Frontend: Vue.js
 AI Verification Engine: Python + Ollama
 Database: Postgres
+
+## Development
+
+### Prerequisites
+
+- **Go** 1.25.5+
+- **Docker** & **Docker Compose**
+- **Make**
+
+### Quick Start
+
+```bash
+# 1. Install dev tools (golangci-lint, swag, gofumpt, air, goreleaser, govulncheck)
+make install-tools
+
+# 2. Start Postgres and Redis
+make docker-up-infra
+
+# 3. Run database migrations
+make migrate-up
+
+# 4. Start the API with hot-reload
+make run-dev
+```
+
+### Common Commands
+
+All operations go through the **Makefile** at the repo root. Run `make help` for the full list.
+
+| Command | Description |
+|---|---|
+| `make run-dev` | Hot-reload dev server (requires air) |
+| `make lint` | Run golangci-lint |
+| `make format` | Format all Go files (gofumpt) |
+| `make test` | Run all tests |
+| `make test-race` | Run tests with race detector |
+| `make coverage-html` | Generate and open HTML coverage report |
+| `make swag` | Generate Swagger API docs |
+| `make migrate-up` | Apply pending migrations |
+| `make migrate-create NAME=x` | Create a new migration pair |
+| `make docker-down` | Stop all containers |
+| `make all` | Full pipeline: tidy → format → lint → test → build |
+
+### Project Structure
+
+```
+.
+├── Makefile                  # Build, test, lint, docker targets
+├── docker-compose.yaml       # Postgres, Redis, pgAdmin, RedisInsight
+├── backend/
+│   ├── cmd/api/              # Main API entrypoint
+│   ├── cmd/migrate/          # Migration CLI
+│   ├── cmd/worker/           # Asynq background worker
+│   ├── internal/server/       # Chi router & HTTP server
+│   ├── internal/service/      # Business logic
+│   ├── internal/repository/   # Postgres & Redis data access
+│   ├── internal/middleware/   # HTTP middleware stack
+│   ├── migrations/            # SQL migration files
+│   └── docs/                  # Swagger-generated docs
+└── .env                       # Environment variables
+```
+
+See [AGENTS.md](./AGENTS.md) for comprehensive development guidelines, code style, and patterns.
