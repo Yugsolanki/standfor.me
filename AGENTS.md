@@ -6,6 +6,31 @@ This file provides instructions for agentic coding agents operating in this repo
 
 Standfor.me is a Golang backend API using chi router, PostgreSQL, and Redis. The frontend is Vue.js (separate repository).
 
+## Git Hooks
+
+Two pre-commit hooks are installed at `.git/hooks/`:
+
+### Pre-Commit Hook (`.git/hooks/pre-commit`)
+
+Runs automatically before every commit on **staged Go files**:
+
+1. **Formatting** — Checks staged files with `gofumpt` (falls back to `go fmt`)
+2. **Static analysis** — Runs `go vet` on affected packages
+3. **Debug leftovers** — Warns on `fmt.Print`, `println`, `panic("`, `TODO:`, `FIXME:`, `DEBUG`, `XXX` (non-blocking)
+4. **Module consistency** — Validates `go.mod`/`go.sum` if staged
+
+### Commit-Msg Hook (`.git/hooks/commit-msg`)
+
+Validates the commit message follows **Conventional Commits**:
+
+```
+type(scope): description
+```
+
+Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`
+
+Merge and revert commits bypass validation. To skip hooks temporarily, use `git commit --no-verify`.
+
 ## Build, Lint, and Test Commands
 
 The project uses a **Makefile** at the repo root for all common operations. Run `make help` to see all targets.
