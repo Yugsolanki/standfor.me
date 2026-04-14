@@ -17,6 +17,11 @@ import (
 	"github.com/Yugsolanki/standfor-me/internal/service"
 )
 
+// @title			Standfor API
+// @version		1.0
+// @description	Standfor API
+// @host			localhost:8080
+// @BasePath		/api/v1
 func main() {
 	// --- Structured Logging ---
 	logger := initLogger()

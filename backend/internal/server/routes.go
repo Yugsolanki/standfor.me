@@ -3,16 +3,23 @@ package server
 import (
 	"net/http"
 
+	_ "github.com/Yugsolanki/standfor-me/docs"
 	"github.com/Yugsolanki/standfor-me/internal/domain"
 	"github.com/Yugsolanki/standfor-me/internal/middleware"
 	internaljwt "github.com/Yugsolanki/standfor-me/internal/pkg/jwt"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/response"
 	"github.com/go-chi/chi/v5"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func (s *Server) setupRoutes(jwtSvc *internaljwt.Service) {
 	s.router.Get("/", s.rootHandler)
 	s.router.Get("/health", s.healthHandler)
+
+	// --- Swagger UI ---
+	s.router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	s.router.Route("/api/v1", func(r chi.Router) {
 		// --- Authentication ---
