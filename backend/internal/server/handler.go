@@ -11,7 +11,7 @@ import (
 
 	"github.com/Yugsolanki/standfor-me/internal/domain"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/response"
-	"github.com/Yugsolanki/standfor-me/internal/validator"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/validator"
 )
 
 // --- Handler Function Types ---
@@ -29,19 +29,16 @@ func (s *Server) handle(h HandlerFunc) http.HandlerFunc {
 // --- Request Decoding ---
 
 func Decode[T any](r *http.Request) (T, error) {
+	const op = "Decode"
 	var dest T
 
 	// Check context before doing any work
 	if err := r.Context().Err(); err != nil {
-		return dest, contextToAppError("Decode", err)
+		return dest, contextToAppError(op, err)
 	}
 
 	if r.Body == nil || r.ContentLength == 0 {
-		return dest, &domain.AppError{
-			Err:     domain.ErrBadRequest,
-			Op:      "Decode",
-			Message: "Request body must not be empty",
-		}
+		return dest, domain.NewBadRequestError(op, "Request body must not be empty")
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
@@ -54,24 +51,15 @@ func Decode[T any](r *http.Request) (T, error) {
 		// check if decoding failed because the context was canceled
 		// (e.g., client disconnected mid-upload)
 		if ctxErr := r.Context().Err(); ctxErr != nil {
-			return dest, contextToAppError("Decode", ctxErr)
+			return dest, contextToAppError(op, ctxErr)
 		}
-		return dest, &domain.AppError{
-			Err:     domain.ErrBadRequest,
-			Op:      "Decode",
-			Message: fmt.Sprintf("Invalid JSON: %s", humanizeJSONError(err)),
-			Cause:   err,
-		}
+		return dest, domain.NewBadRequestError(op, fmt.Sprintf("Invalid JSON: %s", humanizeJSONError(err)))
 	}
 
 	// Validate the struct using your existing validator package.
-	if validationError := validator.Validate(dest); len(validationError) > 0 {
-		return dest, &domain.AppError{
-			Err:     domain.ErrValidation,
-			Op:      "Decode",
-			Message: "Validation failed. Please check the errors and try again.",
-			Details: validationError,
-		}
+	v := validator.New()
+	if validationError := v.Validate(dest); len(validationError) > 0 {
+		return dest, domain.NewValidationError(op, validationError)
 	}
 
 	return dest, nil

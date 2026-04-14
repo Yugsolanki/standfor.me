@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 func TestCanonicalLogger_BasicRequest(t *testing.T) {
@@ -400,7 +401,7 @@ func TestCanonicalLogger_WithRequestID(t *testing.T) {
 	wrapped := RequestID(CanonicalLogger(log)(nextHandler))
 
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set(RequestIDHeader, "custom-request-id")
+	req.Header.Set(requestid.RequestIDHeader, "custom-request-id")
 	rec := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(rec, req)

@@ -8,6 +8,7 @@ import (
 	"github.com/Yugsolanki/standfor-me/internal/pkg/crypto"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/httputil"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 // responseRecorder is a wrapper around http.ResponseWriter that records
@@ -61,7 +62,7 @@ func CanonicalLogger(log *slog.Logger) func(http.Handler) http.Handler {
 			cf := logger.NewCanonicalFields()
 			cf.Set("http_method", r.Method)
 			cf.Set("http_path", r.URL.Path)
-			cf.Set("request_id", GetRequestID(r.Context()))
+			cf.Set("request_id", requestid.GetRequestID(r.Context()))
 
 			if r.URL.RawQuery != "" {
 				cf.Set("http_query", r.URL.RawQuery)
@@ -76,7 +77,7 @@ func CanonicalLogger(log *slog.Logger) func(http.Handler) http.Handler {
 			r = r.WithContext(ctx)
 
 			// Set the request ID on the response headers for client correlation.
-			w.Header().Set("X-Request-ID", GetRequestID(r.Context()))
+			w.Header().Set("X-Request-ID", requestid.GetRequestID(r.Context()))
 
 			// wrap the response writer to capture status code and bytes
 			rec := newResponseRecorder(w)

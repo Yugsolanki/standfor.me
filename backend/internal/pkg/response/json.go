@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/Yugsolanki/standfor-me/internal/domain"
-	"github.com/Yugsolanki/standfor-me/internal/middleware"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 type SuccessResponse struct {
@@ -80,7 +80,7 @@ func JSONMessage(w http.ResponseWriter, r *http.Request, status int, message str
 //	}
 func JSONError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
-	requestID := middleware.GetRequestID(ctx)
+	requestID := requestid.GetRequestID(ctx)
 
 	// 1. Check for context errors first
 	if ctxErr := ctx.Err(); ctxErr != nil {
@@ -108,6 +108,38 @@ func JSONError(w http.ResponseWriter, r *http.Request, err error) {
 
 	// 4. Unknown/Unexpected error
 	handleUnknownError(w, r, err, requestID)
+}
+
+// JSONValidationError writes a 422 Unprocessable Entity response for validation failures.
+// It accepts the field-level errors map returned by validator.Validate() and wraps them
+// into the standard ErrorResponse envelope.
+//
+// Usage:
+//
+//	if errs := s.validator.Validate(body); errs != nil {
+//	    response.JSONValidationError(w, r, errs)
+//	    return
+//	}
+func JSONValidationError(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	ctx := r.Context()
+	requestID := requestid.GetRequestID(ctx)
+
+	logger.AddFields(ctx, map[string]any{
+		"error":         "validation failed",
+		"error_type":    "VALIDATION_ERROR",
+		"error_status":  http.StatusUnprocessableEntity,
+		"error_details": errors,
+	})
+
+	writeJSON(w, r, http.StatusUnprocessableEntity, ErrorResponse{
+		Success:   false,
+		RequestID: requestID,
+		Error: ErrBody{
+			Message: "Validation failed. Please check the errors and try again.",
+			Code:    "VALIDATION_ERROR",
+			Details: errors,
+		},
+	})
 }
 
 // handleContextError processes context-related errors (timeout, cancellation)
@@ -301,7 +333,7 @@ func writeJSON(w http.ResponseWriter, r *http.Request, status int, data any) {
 		// Fall back to a safe response.
 		slog.Error("failed to marshal JSON response",
 			"error", err,
-			"request_id", middleware.GetRequestID(r.Context()),
+			"request_id", requestid.GetRequestID(r.Context()),
 		)
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(`{"success":false,"error":{"message":"Internal Server Error","code":"INTERNAL"}}`))

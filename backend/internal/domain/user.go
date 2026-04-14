@@ -56,7 +56,7 @@ type User struct {
 
 // CreateUserParams holds the required fields for creating a new user.
 type CreateUserParams struct {
-	Username     string `db:"username"      validate:"required,min=3,max=30,alphanum"`
+	Username     string `db:"username"      validate:"required,min=3,max=30,username"`
 	Email        string `db:"email"         validate:"required,email,max=255"`
 	PasswordHash string `db:"password_hash" validate:"required"`
 	DisplayName  string `db:"display_name"  validate:"required,min=3,max=50"`
@@ -65,27 +65,32 @@ type CreateUserParams struct {
 // UpdateUserParams holds optional fields for a partial user update.
 // Pointer fields: nil means "don't change", non-nil means "set to this value".
 type UpdateUserParams struct {
-	DisplayName       *string `db:"display_name"`
-	Bio               *string `db:"bio"`
-	AvatarURL         *string `db:"avatar_url"`
-	Location          *string `db:"location"`
-	ProfileVisibility *string `db:"profile_visibility"`
-	EmbedEnabled      *bool   `db:"embed_enabled"`
+	DisplayName       *string `db:"display_name" validate:"omitempty,min=3,max=50"`
+	Bio               *string `db:"bio" validate:"omitempty,max=1000"`
+	AvatarURL         *string `db:"avatar_url" validate:"omitempty,url,max=2048"`
+	Location          *string `db:"location" validate:"omitempty,max=100"`
+	ProfileVisibility *string `db:"profile_visibility" validate:"omitempty,oneof=public private unlisted"`
+	EmbedEnabled      *bool   `db:"embed_enabled" validate:"omitempty"`
 }
 
-// UpdateUsernameParams holds the required fields for updating a username.
-type UpdateUsernameParams struct {
-	Username string `db:"username" validate:"required,min=3,max=30,alphanum"`
+// ChangeUsernameParams holds the required fields for updating a username.
+type ChangeUsernameParams struct {
+	Username string `db:"username" validate:"required,min=3,max=30,username"`
+}
+
+// ChangePasswordParams holds the required fields for updating a password.
+type ChangePasswordParams struct {
+	Password string `db:"password" validate:"required,min=8,max=72"`
 }
 
 // UpdateRoleParams holds the required fields for updating a role.
 type UpdateRoleParams struct {
-	Role string `db:"role" validate:"required"`
+	Role string `db:"role" validate:"required,oneof=user moderator admin superadmin"`
 }
 
 // UpdateStatusParams holds the required fields for updating a status.
 type UpdateStatusParams struct {
-	Status string `db:"status" validate:"required"`
+	Status string `db:"status" validate:"required,oneof=active suspended banned deactivated"`
 }
 
 // ListUsersParams holds pagination parameters for listing users.

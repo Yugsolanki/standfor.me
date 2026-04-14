@@ -9,11 +9,19 @@ import (
 	"time"
 
 	"github.com/Yugsolanki/standfor-me/internal/config"
+	internaljwt "github.com/Yugsolanki/standfor-me/internal/pkg/jwt"
+	appvalidator "github.com/Yugsolanki/standfor-me/internal/pkg/validator"
 	"github.com/Yugsolanki/standfor-me/internal/repository/postgres"
 	"github.com/Yugsolanki/standfor-me/internal/repository/redis"
 	"github.com/Yugsolanki/standfor-me/internal/server"
+	"github.com/Yugsolanki/standfor-me/internal/service"
 )
 
+// @title			Standfor API
+// @version		1.0
+// @description	Standfor API
+// @host			localhost:8080
+// @BasePath		/api/v1
 func main() {
 	// --- Structured Logging ---
 	logger := initLogger()
@@ -50,8 +58,32 @@ func main() {
 
 	slog.Info("redis connection established")
 
+	// --- Repositories ---
+	userRepo := postgres.NewUserRepository(db)
+	refreshTokenRepo := postgres.NewRefreshTokenRepository(db)
+
+	// --- Application Services ---
+	jwtSvc := internaljwt.New(cfg.JWT)
+
+	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, jwtSvc)
+	userSvc := service.NewUserService(userRepo, refreshTokenRepo)
+
+	// --- Validator
+	validator := appvalidator.New()
+
 	// --- Server
-	srv := server.New(&cfg.Server, logger, &server.Services{}, redisClient, &cfg.RateLimit)
+	srv := server.New(
+		&cfg.Server,
+		logger,
+		&server.Services{
+			Auth: authSvc,
+			User: userSvc,
+		},
+		redisClient,
+		&cfg.RateLimit,
+		validator,
+		jwtSvc,
+	)
 
 	// --- Graceful Shutdown
 	go func() {

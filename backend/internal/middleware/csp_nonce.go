@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Yugsolanki/standfor-me/internal/pkg/crypto"
 )
@@ -30,6 +31,13 @@ const (
 func CSPNonce() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check if the path starts with /swagger
+			if strings.HasPrefix(r.URL.Path, "/swagger/") {
+				w.Header().Set("Content-Security-Policy", BaseCSP+"; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			nonce, err := generateNonce(NonceLength)
 			if err != nil {
 				// TODO: Log this in production it indicates a serious entropy issue.

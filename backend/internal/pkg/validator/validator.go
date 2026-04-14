@@ -2,6 +2,7 @@ package validator
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -13,12 +14,13 @@ type Validator struct {
 
 func New() *Validator {
 	v := validator.New()
+	RegisterCustomValidators(v)
 	return &Validator{validate: v}
 }
 
 func (v *Validator) Validate(data any) map[string]string {
 	err := v.validate.Struct(data)
-	if err != nil {
+	if err == nil {
 		return nil
 	}
 
@@ -49,7 +51,20 @@ func formatError(e validator.FieldError) string {
 		return "must be a valid UUID"
 	case "oneof":
 		return fmt.Sprintf("must be one of: %s", e.Param())
+	case "username":
+		return "must be alphanumeric and can contain underscores and hyphens"
 	default:
 		return fmt.Sprintf("failed validation: %s", e.Tag())
 	}
+}
+
+// Custom Validators
+
+func RegisterCustomValidators(v *validator.Validate) {
+	// username must be alphanumeric and can contain underscores and hyphens
+	_ = v.RegisterValidation("username", func(fl validator.FieldLevel) bool {
+		username := fl.Field().String()
+		matched, _ := regexp.MatchString("^[a-z0-9_-]+$", username)
+		return matched
+	})
 }

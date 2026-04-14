@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS movements (
     CONSTRAINT chk_supporter_count_non_negative CHECK (supporter_count >= 0),
     CONSTRAINT chk_trending_score_non_negative CHECK (trending_score >= 0),
     -- Slug Format Validation
-    CONSTRAINT chk_slug_format CHECK (slug ~* '[a-z0-9]+(-[a-z0-9]+)*$')
+    CONSTRAINT chk_slug_format CHECK (slug ~ '[a-z0-9]+(-[a-z0-9]+)*$')
 );
 
 -- Indexes

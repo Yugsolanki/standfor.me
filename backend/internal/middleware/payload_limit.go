@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
+	"github.com/Yugsolanki/standfor-me/internal/pkg/requestid"
 )
 
 // Common payload limits
@@ -31,7 +32,7 @@ func PayloadLimit(maxBytes int64) func(http.Handler) http.Handler {
 				r.Method == http.MethodPatch {
 
 				if r.ContentLength > maxBytes {
-					requestID := GetRequestID(r.Context())
+					requestID := requestid.GetRequestID(r.Context())
 					logger.AddField(r.Context(), "rejected", "payload_too_large")
 					logger.AddField(r.Context(), "content_length", r.ContentLength)
 					logger.AddField(r.Context(), "max_bytes", formatBytes(maxBytes))
@@ -92,7 +93,7 @@ func PayloadLimitByRoute(routeLimits map[string]int64, defaultLimit int64) func(
 				}
 
 				if r.ContentLength > limit {
-					requestID := GetRequestID(r.Context())
+					requestID := requestid.GetRequestID(r.Context())
 					logger.AddField(r.Context(), "rejected", "payload_too_large")
 					logger.AddField(r.Context(), "content_length", r.ContentLength)
 					logger.AddField(r.Context(), "max_bytes", formatBytes(limit))
