@@ -4,9 +4,10 @@ networks:
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: docker.io/library/postgres:17-alpine
     container_name: standfor-postgres
     restart: unless-stopped
+    
     environment:
       POSTGRES_USER: ${DATABASE_USER:-postgres}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
@@ -14,7 +15,7 @@ services:
     ports:
       - "${DATABASE_PORT:-5432}:5432"
     volumes:
-      - ./storage/postgres:/var/lib/postgresql/data
+      - ./storage/postgres:/var/lib/postgresql/data:Z
     networks:
       - standfor-net
     healthcheck:
@@ -24,9 +25,10 @@ services:
       retries: 5
 
   pgadmin:
-    image: dpage/pgadmin4
+    image: docker.io/dpage/pgadmin4
     container_name: standfor-pgadmin
     restart: unless-stopped
+    
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?PGADMIN_PASSWORD is required}
@@ -40,14 +42,15 @@ services:
       - standfor-net
 
   redis:
-    image: redis:8-alpine
+    image: docker.io/library/redis:8-alpine
     container_name: standfor-redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"]
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - ./storage/redis:/data
+      - ./storage/redis:/data:Z
     networks:
       - standfor-net
     healthcheck:
@@ -57,9 +60,10 @@ services:
       retries: 5
 
   redisinsight:
-    image: redis/redisinsight:latest
+    image: docker.io/redis/redisinsight:latest
     container_name: standfor-redisinsight
     restart: unless-stopped
+    
     ports:
       - "5540:5540"
     environment:
