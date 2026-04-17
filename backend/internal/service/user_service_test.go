@@ -107,6 +107,34 @@ func (m *userRepoMock) List(ctx context.Context, params domain.ListUsersParams) 
 	return args.Get(0).([]domain.User), args.Int(1), args.Error(2)
 }
 
+func (m *userRepoMock) AnonymizeExpired(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (s *userRepoMock) Count(ctx context.Context) (int, error) {
+	args := s.Called(ctx)
+	return args.Get(0).(int), args.Error(1)
+}
+
+func (s *userRepoMock) HardDelete(ctx context.Context, id uuid.UUID) error {
+	args := s.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (s *userRepoMock) Restore(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	args := s.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+
+func (s *userRepoMock) VerifyEmail(ctx context.Context, id uuid.UUID) error {
+	args := s.Called(ctx, id)
+	return args.Error(0)
+}
+
 type userSvcRefreshTokenMock struct {
 	mock.Mock
 }

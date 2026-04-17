@@ -574,6 +574,7 @@ paths:
       summary: Get current user
       tags:
       - auth
+      - users
   /api/v1/auth/refresh:
     post:
       consumes:
@@ -704,6 +705,29 @@ paths:
       - BearerAuth: []
       summary: Delete current user
       tags:
+      - users
+    get:
+      description: Returns the profile of the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.authUserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - auth
       - users
     patch:
       consumes:

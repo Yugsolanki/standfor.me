@@ -262,18 +262,19 @@ func (s *Server) logoutAllHandler(w http.ResponseWriter, r *http.Request) error 
 	return nil
 }
 
-// meHandler handles GET /api/v1/auth/me.
+// meHandler handles GET /api/v1/auth/me, and GET /api/v1/users/me.
 // Authenticated — returns the profile of the authenticated user.
 //
 //	@Summary		Get current user
 //	@Description	Returns the profile of the authenticated user
-//	@Tags			auth
+//	@Tags			auth, users
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Success		200	{object}	authUserResponse
 //	@Failure		401	{object}	response.ErrorResponse
 //	@Failure		500	{object}	response.ErrorResponse
 //	@Router			/api/v1/auth/me [get]
+//	@Router			/api/v1/users/me [get]
 func (s *Server) meHandler(w http.ResponseWriter, r *http.Request) error {
 	const op = "server.meHandler"
 

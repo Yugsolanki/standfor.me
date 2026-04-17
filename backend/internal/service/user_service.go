@@ -14,10 +14,17 @@ type UserRepository interface {
 	FindByUsername(ctx context.Context, username string) (*domain.User, error)
 	Update(ctx context.Context, id uuid.UUID, params domain.UpdateUserParams) (*domain.User, error)
 	ChangePassword(ctx context.Context, id uuid.UUID, params domain.ChangePasswordParams) error
-	SoftDelete(ctx context.Context, id uuid.UUID) error
 	UpdateRole(ctx context.Context, id uuid.UUID, params domain.UpdateRoleParams) (*domain.User, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, params domain.UpdateStatusParams) (*domain.User, error)
+	VerifyEmail(ctx context.Context, id uuid.UUID) error
+	SoftDelete(ctx context.Context, id uuid.UUID) error
+	Restore(ctx context.Context, id uuid.UUID) (*domain.User, error)
+	AnonymizeExpired(ctx context.Context) (int64, error)
+	HardDelete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, params domain.ListUsersParams) ([]domain.User, int, error)
+	Count(ctx context.Context) (int, error)
+	UsernameExists(ctx context.Context, username string) (bool, error)
+	EmailExists(ctx context.Context, email string) (bool, error)
 }
 
 type ChangePasswordInput struct {
@@ -127,6 +134,15 @@ func (s *UserService) UpdateStatus(ctx context.Context, id uuid.UUID, status str
 	return user, nil
 }
 
+// VerifyEmail verifies a user's email address.
+func (s *UserService) VerifyEmail(ctx context.Context, id uuid.UUID) error {
+	if err := s.users.VerifyEmail(ctx, id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SoftDelete marks a user as deleted and terminates all sessions
 func (s *UserService) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	if err := s.users.SoftDelete(ctx, id); err != nil {
@@ -134,6 +150,35 @@ func (s *UserService) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	_ = s.refreshTokens.RevokeAllForUser(ctx, id)
+
+	return nil
+}
+
+// Restore restores a soft-deleted user.
+func (s *UserService) Restore(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	user, err := s.users.Restore(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// AdminAnonymizeExpired anonymizes all expired users.
+func (s *UserService) AdminAnonymizeExpired(ctx context.Context) (int64, error) {
+	rows, err := s.users.AnonymizeExpired(ctx)
+	if err != nil {
+		return -1, err
+	}
+
+	return rows, nil
+}
+
+// AdminHardDelete permanently deletes a user.
+func (s *UserService) AdminHardDelete(ctx context.Context, id uuid.UUID) error {
+	if err := s.users.HardDelete(ctx, id); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -146,4 +191,33 @@ func (s *UserService) List(ctx context.Context, params domain.ListUsersParams) (
 	}
 
 	return users, total, nil
+}
+
+// Count returns the total number of users.
+func (s *UserService) Count(ctx context.Context) (int, error) {
+	total, err := s.users.Count(ctx)
+	if err != nil {
+		return -1, err
+	}
+	return total, nil
+}
+
+// UsernameExists checks if a username already exists.
+func (s *UserService) UsernameExists(ctx context.Context, username string) (bool, error) {
+	exists, err := s.users.UsernameExists(ctx, username)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+// EmailExists checks if an email address already exists.
+func (s *UserService) EmailExists(ctx context.Context, email string) (bool, error) {
+	exists, err := s.users.EmailExists(ctx, email)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }

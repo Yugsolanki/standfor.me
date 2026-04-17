@@ -27,11 +27,16 @@ func (s *Server) setupRoutes(jwtSvc *internaljwt.Service) {
 			// Public endpoints
 			r.Post("/register", s.handle(s.registerHandler))
 			r.Post("/login", s.handle(s.loginHandler))
-			r.Post("/refresh", s.handle(s.refreshHandler))
+			r.Post("/refresh-token", s.handle(s.refreshHandler))
 
 			// Authenticated endpoints
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireAuth(jwtSvc))
+				// * Implementation to be done with background workers and Resend.
+				// TODO: r.Post("/forgot-password", s.handle(s.forgotPasswordHandler))
+				// TODO: r.Post("/verify-email", s.handle(s.verifyEmailHandler))
+				// TODO: r.Post("/resend-verification-email", s.handle(s.resendVerificationEmailHandler))
+				r.Post("/reset-password", s.handle(s.changePasswordHandler))
 				r.Post("/logout", s.handle(s.logoutHandler))
 				r.Post("/logout-all", s.handle(s.logoutAllHandler))
 				r.Get("/me", s.handle(s.meHandler))
@@ -46,9 +51,10 @@ func (s *Server) setupRoutes(jwtSvc *internaljwt.Service) {
 			// Authenticated self-service
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireAuth(jwtSvc))
+				r.Get("/me", s.handle(s.meHandler))
 				r.Patch("/me", s.handle(s.updateMeHandler))
-				r.Post("/me/password", s.handle(s.changePasswordHandler))
 				r.Delete("/me", s.handle(s.deleteMeHandler))
+				r.Post("/me/password", s.handle(s.changePasswordHandler))
 			})
 		})
 

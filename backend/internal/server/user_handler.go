@@ -109,7 +109,10 @@ func (s *Server) getUserHandler(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if user.ProfileVisibility == domain.ProfileVisibilityPrivate {
+	// Check if the user is private or suspended or banned or deactivated
+	// Only owner or admin can view private profile or unlisted profile
+	// Only owner or admin can view suspended or banned or deactivated profile
+	if user.ProfileVisibility != domain.ProfileVisibilityPublic && user.Status != domain.StatusActive {
 		claims := middleware.ClaimsFromContext(r.Context())
 		isOwner := claims != nil && claims.UserID == user.ID
 		isAdmin := claims != nil &&
