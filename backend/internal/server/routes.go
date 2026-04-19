@@ -77,6 +77,42 @@ func (s *Server) setupRoutes(jwtSvc *internaljwt.Service) {
 				r.Delete("/users/{id}", s.handle(s.adminDeleteUserHandler))
 			})
 		})
+
+		// --- Movements ---
+		r.Route("/movements", func(r chi.Router) {
+			// Public endpoints
+			r.Get("/", s.handle(s.listMovementsHandler))
+			r.Get("/trending", s.handle(s.listTrendingMovementsHandler))
+			r.Get("/popular", s.handle(s.listPopularMovementsHandler))
+			r.Get("/search", s.handle(s.searchMovementsHandler))
+			r.Get("/{slug}", s.handle(s.getMovementBySlugHandler))
+			r.Get("/{slug}/supporters", s.handle(s.getMovementSupportersHandler))
+
+			// Authenticated endpoints
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.RequireAuth(jwtSvc))
+				r.Post("/", s.handle(s.createMovementHandler))
+			})
+		})
+
+		// --- User Movements (authenticated) ---
+		r.Route("/me/movements", func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtSvc))
+			r.Get("/", s.handle(s.listMyMovementsHandler))
+		})
+
+		// --- Admin Movements ---
+		r.Route("/admin/movements", func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtSvc))
+			r.Use(middleware.RequireMinRole(domain.RoleModerator))
+
+			r.Get("/", s.handle(s.adminListMovementsHandler))
+			r.Get("/pending", s.handle(s.adminListPendingMovementsHandler))
+			r.Get("/{id}", s.handle(s.adminGetMovementHandler))
+			r.Patch("/{id}", s.handle(s.adminUpdateMovementHandler))
+			r.Patch("/{id}/status", s.handle(s.adminUpdateMovementStatusHandler))
+			r.Delete("/{id}", s.handle(s.adminDeleteMovementHandler))
+		})
 	})
 
 	// Catch-all for unmatched routes

@@ -19,8 +19,9 @@ import (
 )
 
 type Services struct {
-	Auth *service.AuthService
-	User *service.UserService
+	Auth     *service.AuthService
+	User     *service.UserService
+	Movement *service.MovementService
 }
 
 type Server struct {
