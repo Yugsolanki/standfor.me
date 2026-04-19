@@ -42,6 +42,41 @@ definitions:
       success:
         type: boolean
     type: object
+  server.adminMovementResponse:
+    properties:
+      created_at:
+        type: string
+      created_by_user_id:
+        type: string
+      icon_url:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      long_description:
+        type: string
+      name:
+        type: string
+      reviewed_at:
+        type: string
+      reviewed_by_user_id:
+        type: string
+      short_description:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      supporter_count:
+        type: integer
+      trending_score:
+        type: number
+      updated_at:
+        type: string
+      website_url:
+        type: string
+    type: object
   server.adminUserResponse:
     properties:
       avatar_url:
@@ -103,6 +138,37 @@ definitions:
     - current_password
     - new_password
     type: object
+  server.createMovementRequest:
+    properties:
+      icon_url:
+        maxLength: 2048
+        type: string
+      image_url:
+        maxLength: 2048
+        type: string
+      long_description:
+        maxLength: 5000
+        type: string
+      name:
+        maxLength: 200
+        minLength: 3
+        type: string
+      short_description:
+        maxLength: 500
+        minLength: 10
+        type: string
+      slug:
+        maxLength: 100
+        minLength: 3
+        type: string
+      website_url:
+        maxLength: 2048
+        type: string
+    required:
+    - name
+    - short_description
+    - slug
+    type: object
   server.loginRequest:
     properties:
       email:
@@ -120,6 +186,35 @@ definitions:
         type: string
     required:
     - refreshToken
+    type: object
+  server.publicMovementResponse:
+    properties:
+      created_at:
+        type: string
+      icon_url:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      long_description:
+        type: string
+      name:
+        type: string
+      short_description:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      supporter_count:
+        type: integer
+      trending_score:
+        type: number
+      updated_at:
+        type: string
+      website_url:
+        type: string
     type: object
   server.publicUserResponse:
     properties:
@@ -167,6 +262,45 @@ definitions:
     - email
     - password
     - username
+    type: object
+  server.updateMovementRequest:
+    properties:
+      icon_url:
+        maxLength: 2048
+        type: string
+      image_url:
+        maxLength: 2048
+        type: string
+      long_description:
+        maxLength: 5000
+        type: string
+      name:
+        maxLength: 200
+        minLength: 3
+        type: string
+      short_description:
+        maxLength: 500
+        minLength: 10
+        type: string
+      slug:
+        maxLength: 100
+        minLength: 3
+        type: string
+      website_url:
+        maxLength: 2048
+        type: string
+    type: object
+  server.updateMovementStatusRequest:
+    properties:
+      status:
+        enum:
+        - active
+        - archived
+        - rejected
+        - pending_review
+        type: string
+    required:
+    - status
     type: object
   server.updateRoleRequest:
     properties:
@@ -223,6 +357,284 @@ info:
   title: Standfor API
   version: "1.0"
 paths:
+  /api/v1/admin/movements:
+    get:
+      description: Returns a paginated list of all movements with admin details
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 20, max 100)
+        in: query
+        name: per_page
+        type: integer
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/pagination.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/server.adminMovementResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all movements (admin)
+      tags:
+      - admin-movements
+  /api/v1/admin/movements/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft-deletes a movement
+      parameters:
+      - description: Movement UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete movement (admin)
+      tags:
+      - admin-movements
+    get:
+      description: Returns full admin details for a movement by ID
+      parameters:
+      - description: Movement UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.adminMovementResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get movement by ID (admin)
+      tags:
+      - admin-movements
+    patch:
+      consumes:
+      - application/json
+      description: Updates movement details
+      parameters:
+      - description: Movement UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/server.updateMovementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.adminMovementResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update movement (admin)
+      tags:
+      - admin-movements
+  /api/v1/admin/movements/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Changes a movement's status (active, archived, rejected, pending_review)
+      parameters:
+      - description: Movement UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/server.updateMovementStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.adminMovementResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update movement status (admin)
+      tags:
+      - admin-movements
+  /api/v1/admin/movements/pending:
+    get:
+      description: Returns a paginated list of movements pending review
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 20, max 100)
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/pagination.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/server.adminMovementResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List pending movements (admin)
+      tags:
+      - admin-movements
   /api/v1/admin/users:
     get:
       description: Returns a paginated list of all users with admin details
@@ -648,6 +1060,296 @@ paths:
       summary: Register a new user
       tags:
       - auth
+  /api/v1/me/movements:
+    get:
+      description: Returns movements submitted by the current user
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 20, max 100)
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/pagination.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/server.adminMovementResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get my movements
+      tags:
+      - movements
+  /api/v1/movements:
+    get:
+      description: Returns a paginated list of active movements
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 20, max 100)
+        in: query
+        name: per_page
+        type: integer
+      - description: Sort by (created_at, updated_at, supporter_count, trending_score)
+        in: query
+        name: sort_by
+        type: string
+      - description: Order (asc, desc)
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/pagination.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/server.publicMovementResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: List active movements
+      tags:
+      - movements
+    post:
+      consumes:
+      - application/json
+      description: Creates a new movement (requires approval)
+      parameters:
+      - description: Movement details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/server.createMovementRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.publicMovementResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create movement
+      tags:
+      - movements
+  /api/v1/movements/{slug}:
+    get:
+      description: Returns a single movement by slug
+      parameters:
+      - description: Movement slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.publicMovementResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get movement by slug
+      tags:
+      - movements
+  /api/v1/movements/{slug}/supporters:
+    get:
+      description: Returns a list of supporters for a movement
+      parameters:
+      - description: Movement slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 20, max 100)
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/pagination.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/server.publicUserResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get movement supporters
+      tags:
+      - movements
+  /api/v1/movements/popular:
+    get:
+      description: Returns a list of movements sorted by supporter count
+      parameters:
+      - description: Number of items (default 10, max 50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/server.publicMovementResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: List popular movements
+      tags:
+      - movements
+  /api/v1/movements/search:
+    get:
+      description: Searches movements by name using trigram similarity
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 20, max 100)
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/pagination.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/server.publicMovementResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Search movements
+      tags:
+      - movements
+  /api/v1/movements/trending:
+    get:
+      description: Returns a list of movements sorted by trending score
+      parameters:
+      - description: Number of items (default 10, max 50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/server.publicMovementResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: List trending movements
+      tags:
+      - movements
   /api/v1/users/{username}:
     get:
       consumes:
