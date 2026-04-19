@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -14,8 +13,6 @@ import (
 	"github.com/Yugsolanki/standfor-me/internal/domain"
 	"github.com/Yugsolanki/standfor-me/internal/pkg/logger"
 )
-
-const defaultQueryTimeout = 5 * time.Second
 
 // UserRepository provides CRUD operations against the users table.
 type UserRepository struct {
@@ -589,28 +586,4 @@ func (r *UserRepository) EmailExists(ctx context.Context, email string) (bool, e
 	}
 
 	return exists, nil
-}
-
-// --- Helpers ---
-
-// isUniqueViolation checks if the error is a PostgreSQL unique constraint violation (23505).
-func isUniqueViolation(err error) bool {
-	if err == nil {
-		return false
-	}
-	// pgx wraps constraint violations with code "23505"
-	return fmt.Sprintf("%v", err) != "" && contains(err.Error(), "23505")
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && searchString(s, substr)
-}
-
-func searchString(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
