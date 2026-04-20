@@ -1,0 +1,117 @@
+meilisearch:
+  indexes:
+    movements:
+      uid: "movements"
+      primary_key: "id"
+      # Fields that Meilisearch will build inverted index on
+      searchable_attributes:
+        - "name"
+        - "short_description"
+        - "organization_name"
+        - "category_names"
+        - "slug"
+      # Fields available for filtering (depth of commitment metrics)
+      filterable_attributes:
+        - "status"
+        - "is_featured"
+        - "category_ids"
+        - "category_slugs"
+        - "claimed_by_org_id"
+        - "avg_verification_tier"
+        - "min_verification_tier"
+        - "max_verification_tier"
+        - "min_badge_level_numeric"
+        - "max_badge_level_numeric"
+        - "supporter_count"
+        - "trending_score"
+        - "has_verified_org"
+        - "created_at_unix"
+        - "created_by_user_id"
+      # Fields available for sorting
+      sortable_attributes:
+        - "supporter_count"
+        - "trending_score"
+        - "created_at_unix"
+        - "updated_at_unix"
+        - "name"
+      # Ranking rules (Order of importance)
+      ranking_rules:
+        - "words"
+        - "typo"
+        - "proximity"
+        - "attribute"
+        - "sort"
+        - "exactness"
+        - "trending_score:desc"
+        - "supporter_count:desc"
+      # Settings for typo tolerance
+      typo_tolerance:
+        enabled: true
+        min_word_size_for_typos:
+          one_typo: 5
+          two_typos: 9
+      # Settings for pagination
+      pagination:
+        max_total_hits: 1000
+
+    users:
+      uid: "users"
+      primary_key: "id"
+      searchable_attributes:
+        - "display_name"
+        - "username"
+        - "bio"
+        - "location"
+        - "movement_names"
+      filterable_attributes:
+        - "profile_visibility"
+        - "status"
+        - "location"
+        - "min_verification_tier"
+        - "max_badge_level_numeric"
+        - "verified_movement_count"
+        - "is_deleted"
+      sortable_attributes:
+        - "total_movements_supported"
+        - "avg_verification_tier"
+        - "created_at_unix"
+        - "username"
+      ranking_rules:
+        - "words"
+        - "typo"
+        - "proximity"
+        - "attribute"
+        - "sort"
+        - "exactness"
+        - "avg_verification_tier:desc"
+      pagination:
+        max_total_hits: 1000      
+
+    organizations:
+      uid: "organizations"
+      primary_key: "id"
+      searchable_attributes:
+        - "name"
+        - "short_description"
+        - "slug"
+      filterable_attributes:
+        - "is_verified"
+        - "status"
+        - "country_code"
+        - "supporter_count"
+      sortable_attributes:
+        - "supporter_count"
+        - "movement_count"
+        - "name"
+        - "created_at_unix"
+      ranking_rules:
+        - "words"
+        - "typo"
+        - "proximity"
+        - "attribute"
+        - "sort"
+        - "exactness"
+        - "supporter_count:desc"
+      # Settings for pagination
+      pagination:
+        max_total_hits: 1000

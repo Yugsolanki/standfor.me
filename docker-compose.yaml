@@ -75,3 +75,25 @@ services:
         condition: service_healthy
     networks:
       - standfor-net
+
+  meilisearch:
+    image: docker.io/getmeili/meilisearch:latest
+    container_name: standfor-meilisearch
+    restart: unless-stopped
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILISEARCH_MASTER_KEY=${MEILI_MASTER_KEY:?MEILI_MASTER_KEY is required}
+      - MEILI_ENV=${MEILI_ENV:-development}
+      - MEILI_DB_PATH=${MEILI_DB_PATH:-/meili_data}
+      - MEILI_LOG_LEVEL=${MEILI_LOG_LEVEL:-INFO}
+      - MEILI_MAX_INDEXING_MEMORY=${MEILI_MAX_INDEXING_MEMORY:-512Mb}
+    volumes:
+      - ./storage/meilisearch:/meili_data:Z
+    networks:
+      - standfor-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
