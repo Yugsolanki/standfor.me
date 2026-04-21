@@ -3,6 +3,7 @@ module github.com/Yugsolanki/standfor-me
 go 1.25.5
 
 require (
+	github.com/aws/smithy-go v1.13.3
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
