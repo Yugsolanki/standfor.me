@@ -25,6 +25,7 @@ type MovementSearchRequest struct {
 
 	// Category Filters
 	CategoryIDs   []string `json:"category_ids" form:"category_ids"`
+	CategoryNames []string `json:"category_names" form:"category_names"`
 	CategorySlugs []string `json:"category_slugs" form:"category_slugs"`
 
 	// Status
@@ -66,6 +67,7 @@ type UserSearchRequest struct {
 	Location          string `json:"location" form:"location"`
 
 	// Category Filters
+	CategoryIDs   []string `json:"category_ids" form:"category_ids"`
 	CategoryNames []string `json:"category_names" form:"category_names"`
 	CategorySlugs []string `json:"category_slugs" form:"category_slugs"`
 
