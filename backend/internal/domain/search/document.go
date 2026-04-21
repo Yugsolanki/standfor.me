@@ -26,15 +26,15 @@ type MovementDocument struct {
 	TrendingScore  float64 `json:"trending_score"`
 
 	// --- Depth of Commitment Metrics ---
-	AvgVerificationTier      float64        `json:"avg_verification_tier"`
-	VerifiedSupporterCount   int            `json:"verified_supporter_count"`
-	UnverifiedSupporterCount int            `json:"unverified_supporter_count"`
-	MinVerificationTier      int            `json:"min_verification_tier"`
-	MaxVerificationTier      int            `json:"max_verification_tier"`
-	MinBadgeLevelNumeric     int            `json:"min_badge_level_numeric"`
-	MaxBadgeLevelNumeric     int            `json:"max_badge_level_numeric"`
-	TierDistribution         map[string]int `json:"tier_distribution"`
-	BadgeDistribution        map[string]int `json:"badge_distribution"`
+	AvgVerificationTier      float64     `json:"avg_verification_tier"`
+	VerifiedSupporterCount   int         `json:"verified_supporter_count"`
+	UnverifiedSupporterCount int         `json:"unverified_supporter_count"`
+	MinVerificationTier      int         `json:"min_verification_tier"`
+	MaxVerificationTier      int         `json:"max_verification_tier"`
+	MinBadgeLevelNumeric     int         `json:"min_badge_level_numeric"`
+	MaxBadgeLevelNumeric     int         `json:"max_badge_level_numeric"`
+	TierDistribution         map[int]int `json:"tier_distribution"`
+	BadgeDistribution        map[int]int `json:"badge_distribution"`
 
 	// --- Category Data ---
 	CategoryIDs   []string `json:"category_ids"`
@@ -84,9 +84,8 @@ type UserDocument struct {
 	IsDeleted         bool   `json:"is_deleted"`
 
 	// --- Timestamps ---
-	CreatedAtUnix   int64 `json:"created_at_unix"`
-	UpdatedAtUnix   int64 `json:"updated_at_unix"`
-	LastLoginAtUnix int64 `json:"last_login_at_unix"`
+	CreatedAtUnix int64 `json:"created_at_unix"`
+	UpdatedAtUnix int64 `json:"updated_at_unix"`
 }
 
 // OrganizationDocument represents the data structure for an organization in the search index.
