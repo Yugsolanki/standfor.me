@@ -74,9 +74,9 @@ type UserIndexData struct {
 
 	// Categories
 	// * REVISIT: do we need this?
-	// CategoryIDs   []string
-	// CategorySlugs []string
-	// CategoryNames []string
+	CategoryIDs   []string
+	CategorySlugs []string
+	CategoryNames []string
 
 	// Aggregated from user_movements
 	TotalMovementsSupported int
