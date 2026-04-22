@@ -52,9 +52,9 @@ func (r *UserRepository) Search(
 
 	// * REVISIT - Are you sure? Do we need this?
 	// Category filters
-	// fb.addInStrings("category_ids", req.CategoryIDs)
-	// fb.addInStrings("category_names", req.CategoryNames)
-	// fb.addInStrings("category_slugs", req.CategorySlugs)
+	fb.addInStrings("category_ids", req.CategoryIDs)
+	fb.addInStrings("category_names", req.CategoryNames)
+	fb.addInStrings("category_slugs", req.CategorySlugs)
 
 	// Depth of Commitment filters
 	fb.addOptionalGTE("min_verification_tier", req.MinVerificationTier)
