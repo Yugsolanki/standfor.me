@@ -36,13 +36,13 @@ type MovementSearchRequest struct {
 	OrgID          string `json:"org_id" form:"org_id"`
 
 	// Depth of Commitment Verification Filters
-	VerifiedSupporterCount   *int64   `json:"verified_supporter_count" form:"verified_supporters"`
-	UnverifiedSupporterCount *int64   `json:"unverified_supporter_count" form:"unverified_supporters"`
-	MinAvgVerificationTier   *float64 `json:"min_avg_verification_tier" form:"min_avg_vt"`
-	MaxAvgVerificationTier   *float64 `json:"max_avg_verification_tier" form:"max_avg_vt"`
-	MinMinVerificationTier   *int     `json:"min_min_verification_tier" form:"min_min_vt"`
-	MinMaxVerificationTier   *int     `json:"min_max_verification_tier" form:"min_max_vt"`
-	MinMaxBadgeLevelNumeric  *int     `json:"min_max_badge_level" form:"min_max_badge"`
+	VerifiedSupporterCount   *int64   `json:"verified_supporter_count" form:"verified_supporters" validate:"required,gte=0"`
+	UnverifiedSupporterCount *int64   `json:"unverified_supporter_count" form:"unverified_supporters" validate:"required,gte=0"`
+	MinAvgVerificationTier   *float64 `json:"min_avg_verification_tier" form:"min_avg_vt" validate:"required,gte=0,lte=5,ltefield=MaxAvgVerificationTier"`
+	MaxAvgVerificationTier   *float64 `json:"max_avg_verification_tier" form:"max_avg_vt" validate:"required,gte=0,lte=5"`
+	MinMinVerificationTier   *int     `json:"min_min_verification_tier" form:"min_min_vt" validate:"required,gte=0,lte=5"`
+	MinMaxVerificationTier   *int     `json:"min_max_verification_tier" form:"min_max_vt" validate:"omitempty,gte=0,lte=5"`
+	MinMaxBadgeLevelNumeric  *int     `json:"min_max_badge_level" form:"min_max_badge" validate:"required,gte=0,lte=5"`
 
 	// Popularity Filters
 	MinSupporterCount *int64   `json:"min_supporter_count" form:"min_supporters"`
