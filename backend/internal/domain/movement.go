@@ -26,6 +26,7 @@ type Movement struct {
 	SupporterCount   int        `db:"supporter_count"       json:"supporter_count"`
 	TrendingScore    float64    `db:"trending_score"       json:"trending_score"`
 	Status           string     `db:"status"                json:"status"`
+	ClaimedByOrgID   *uuid.UUID `db:"claimed_by_org_id"     json:"claimed_by_org_id,omitempty"`
 	CreatedByUserID  *uuid.UUID `db:"created_by_user_id"    json:"created_by_user_id,omitempty"`
 	ReviewedByUserID *uuid.UUID `db:"reviewed_by_user_id"   json:"reviewed_by_user_id,omitempty"`
 	ReviewedAt       *time.Time `db:"reviewed_at"           json:"reviewed_at,omitempty"`
