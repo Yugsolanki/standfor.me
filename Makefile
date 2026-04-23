@@ -19,11 +19,11 @@ MODULE         := github.com/Yugsolanki/standfor-me
 
 # Directories (relative to repo root)
 BACKEND        := backend
-CMD_API        := $(BACKEND)/cmd/api
-CMD_MIGRATE    := $(BACKEND)/cmd/migrate
-CMD_WORKER     := $(BACKEND)/cmd/worker
+CMD_API        := ./cmd/api
+CMD_MIGRATE    := ./cmd/migrate
+CMD_WORKER     := ./cmd/worker
 MIGRATIONS_DIR := $(BACKEND)/migrations
-SWAG_OUTPUT    := $(BACKEND)/docs
+SWAG_OUTPUT    := ./docs
 
 # Docker / compose
 COMPOSE_FILE   := docker-compose.yaml
@@ -33,8 +33,8 @@ DOCKER_PG_USER := ${DATABASE_USER:-postgres}
 DOCKER_PG_DB   := ${DATABASE_DBNAME:-standfor_dev}
 
 # Test / coverage
-COVER_PROFILE  := $(BACKEND)/coverage.out
-COVER_HTML     := $(BACKEND)/coverage.html
+COVER_PROFILE  := coverage.out
+COVER_HTML     := coverage.html
 
 # Tool binaries (installed via make install-tools when missing)
 GOLANGCI_LINT  ?= $(shell command -v golangci-lint 2>/dev/null)
@@ -75,22 +75,22 @@ help: ## Show this help summary
 # ---------- Build ------------------------------------------------------------
 
 build: build-api ## Build the API binary (default target)
-
+ 
 build-api: ## Build the API server binary
 	@mkdir -p $(BACKEND)/tmp
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GO_BUILD_FLAGS) -tags '$(GO_TAGS)' \
+	cd $(BACKEND) && CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GO_BUILD_FLAGS) -tags '$(GO_TAGS)' \
 		-ldflags="-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)" \
-		-o $(BINARY_OUT) $(MODULE)/$(CMD_API)
-
+		-o tmp/$(BINARY_NAME) $(CMD_API)
+ 
 build-migrate: ## Build the migration CLI binary
 	@mkdir -p $(BACKEND)/tmp
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GO_BUILD_FLAGS) \
-		-o $(MIGRATE_OUT) $(MODULE)/$(CMD_MIGRATE)
-
+	cd $(BACKEND) && CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GO_BUILD_FLAGS) \
+		-o tmp/$(MIGRATE_NAME) $(CMD_MIGRATE)
+ 
 build-worker: ## Build the worker binary (asynq background worker)
 	@mkdir -p $(BACKEND)/tmp
-	CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GO_BUILD_FLAGS) \
-		-o $(WORKER_OUT) $(MODULE)/$(CMD_WORKER)
+	cd $(BACKEND) && CGO_ENABLED=$(CGO_ENABLED) $(GO) build $(GO_BUILD_FLAGS) \
+		-o tmp/$(WORKER_NAME) $(CMD_WORKER)
 
 build-all: build-api build-migrate build-worker ## Build all binaries
 
@@ -105,10 +105,10 @@ run-dev: ## Hot-reload with air (requires `go install github.com/air-verse/air@l
 # ---------- Database Migrations ----------------------------------------------
 
 migrate-up: ## Run all pending migrations (via `go run ./cmd/migrate`)
-	$(GO) run $(CMD_MIGRATE)
+	cd $(BACKEND) && $(GO) run $(CMD_MIGRATE)
 
 migrate-down: ## Roll back the last applied migration
-	$(GO) run $(CMD_MIGRATE) -down
+	cd $(BACKEND) && $(GO) run $(CMD_MIGRATE) -down
 
 migrate-status: ## Show current migration status
 	@echo "Migration files in $(MIGRATIONS_DIR):"
@@ -233,18 +233,17 @@ goreleaser-release: ## Build and publish a release (requires valid GitHub token)
 # ---------- Tool Installation -------------------------------------------------
 
 install-tools: ## Install common dev tools (golangci-lint, swag, gofumpt, air)
-	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	$(GO) install github.com/swaggo/swag/cmd/swag@latest
 	$(GO) install mvdan.cc/gofumpt@latest
 	$(GO) install github.com/air-verse/air@latest
-	$(GO) install github.com/goreleaser/goreleaser@latest
+	$(GO) install github.com/goreleaser/goreleaser/v2@latest
 	$(GO) install golang.org/x/vuln/cmd/govulncheck@latest
 
 # ---------- Clean ------------------------------------------------------------
 
 clean: ## Remove build artifacts and coverage files
 	@rm -rf $(BACKEND)/tmp
-	@rm -f $(COVER_PROFILE) $(COVER_HTML)
+	@rm -f $(BACKEND)/$(COVER_PROFILE) $(BACKEND)/$(COVER_HTML)
 	@echo "Cleaned build artifacts and coverage files."
 
 # ---------- Convenience Aliases ----------------------------------------------
