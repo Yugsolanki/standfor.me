@@ -220,6 +220,8 @@ docker-logs-svc: ## Tail logs from a specific service (usage: make docker-logs-s
 
 docker-clean: ## Stop containers and remove volumes
 	docker compose -f $(COMPOSE_FILE) down -v
+	@[ -d storage ] && sudo chown -R $(shell whoami):$(shell id -gn) storage 2>/dev/null || true
+	@echo "✓ Storage ownership fixed to $(shell whoami)"
 
 docker-build: ## Build Docker images using GoReleaser snapshots
 	docker compose -f $(COMPOSE_FILE) build
