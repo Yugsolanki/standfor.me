@@ -84,7 +84,7 @@ archives:
         formats: [zip]
     files:
       - README.md
-      - backend/migrations/**/*.sql
+      - backend/migrations/*.sql
 
 checksum:
   name_template: >-
