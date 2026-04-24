@@ -37,17 +37,17 @@ func main() {
 	// Clear old data
 	clearData(ctx, *db)
 
-	users := seedUsers(context.Background(), db, 100)
+	users := seedUsers(context.Background(), db, 1000)
 
 	categories := seedCategories(context.Background(), db)
 
-	organizations := seedOrganizations(context.Background(), *db, 20, users)
+	organizations := seedOrganizations(context.Background(), *db, 200, users)
 
-	movements := seedMovements(context.Background(), db, 50, users, organizations)
+	movements := seedMovements(context.Background(), db, 500, users, organizations)
 
 	_ = seedMovementCategories(context.Background(), db, categories, movements)
 
-	_ = seedUserMovements(context.Background(), db, 200, users, movements)
+	_ = seedUserMovements(context.Background(), db, 3000, users, movements)
 
 	log.Println("✅ Seeding completed successfully!")
 }
@@ -90,6 +90,27 @@ func generateSlug(name string) string {
 	}
 
 	return s
+}
+
+// makeUniqueSlug returns a unique slug by appending -N suffix on collision.
+func makeUniqueSlug(slug string, used map[string]int) string {
+	base := slug
+	n, exists := used[slug]
+	if exists {
+		// find next available suffix
+		for {
+			n++
+			candidate := fmt.Sprintf("%s-%d", base, n)
+			if _, exists := used[candidate]; !exists {
+				break
+			}
+		}
+	}
+	used[slug] = n + 1
+	if n == 0 {
+		return slug
+	}
+	return fmt.Sprintf("%s-%d", base, n)
 }
 
 // ptr returns a pointer to the given value.

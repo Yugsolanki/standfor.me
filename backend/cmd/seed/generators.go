@@ -13,6 +13,10 @@ import (
 	"golang.org/x/text/language"
 )
 
+const (
+	MaxCategoriesPerMovement = 10
+)
+
 func GenerateFakeUsers(count int) []domain.User {
 	var users []domain.User
 
@@ -88,7 +92,6 @@ func GenerateFakeUsers(count int) []domain.User {
 		user.LastLoginAt = &lastLogin
 
 		users = append(users, user)
-
 	}
 
 	return users
@@ -142,8 +145,9 @@ func GenerateFakeCategories() []domain.Category {
 func GenerateFakeMovements(count int, userIDs []uuid.UUID, orgIDs []uuid.UUID) []domain.Movement {
 	var movements []domain.Movement
 	titleCaser := cases.Title(language.English)
+	usedSlugs := make(map[string]int)
 
-	for i := range count {
+	for range count {
 		now := time.Now()
 		createdAt := gofakeit.PastDate()
 		updatedAt := gofakeit.DateRange(createdAt, now)
@@ -154,7 +158,7 @@ func GenerateFakeMovements(count int, userIDs []uuid.UUID, orgIDs []uuid.UUID) [
 		m := domain.Movement{
 			ID:               uuid.New(),
 			Name:             name,
-			Slug:             generateSlug(name),
+			Slug:             makeUniqueSlug(generateSlug(name), usedSlugs),
 			ShortDescription: gofakeit.Sentence(20),
 			SupporterCount:   gofakeit.Number(0, 50000),
 			TrendingScore:    math.Round(gofakeit.Float64Range(0, 100)*100) / 100,
@@ -217,7 +221,6 @@ func GenerateFakeMovements(count int, userIDs []uuid.UUID, orgIDs []uuid.UUID) [
 			m.DeletedAt = &deletedAt
 		}
 
-		_ = i
 		movements = append(movements, m)
 	}
 
@@ -233,8 +236,7 @@ func GenerateFakeMovementCategories(movementIDs []uuid.UUID, categoryIDs []uuid.
 	}
 
 	for _, mID := range movementIDs {
-		// Assign between 1 and 5 categories per movement
-		numCategories := min(gofakeit.Number(1, 5), len(categoryIDs))
+		numCategories := min(gofakeit.Number(1, MaxCategoriesPerMovement), len(categoryIDs))
 
 		usedCats := make(map[uuid.UUID]bool)
 
@@ -271,7 +273,7 @@ func GenerateFakeUserMovements(count int, userIDs []uuid.UUID, movementIDs []uui
 
 	usedPairs := make(map[string]bool)
 
-	for i := range count {
+	for range count {
 		// Randomly pair a user and a movement
 		uID := userIDs[gofakeit.Number(0, len(userIDs)-1)]
 		mID := movementIDs[gofakeit.Number(0, len(movementIDs)-1)]
@@ -338,7 +340,6 @@ func GenerateFakeUserMovements(count int, userIDs []uuid.UUID, movementIDs []uui
 			um.RemovedAt = &removedAt
 		}
 
-		_ = i
 		userMovements = append(userMovements, um)
 	}
 
@@ -352,7 +353,9 @@ func GenerateFakeOrganizations(count int, userIDs []uuid.UUID) []domain.Organiza
 		return orgs
 	}
 
-	for i := range count {
+	usedSlugs := make(map[string]int)
+
+	for range count {
 		now := time.Now()
 		createdAt := gofakeit.PastDate()
 		updatedAt := gofakeit.DateRange(createdAt, now)
@@ -361,7 +364,7 @@ func GenerateFakeOrganizations(count int, userIDs []uuid.UUID) []domain.Organiza
 		org := domain.Organization{
 			ID:               uuid.New(),
 			Name:             name,
-			Slug:             generateSlug(name),
+			Slug:             makeUniqueSlug(generateSlug(name), usedSlugs),
 			ShortDescription: gofakeit.Slogan(),
 			LongDescription:  gofakeit.Paragraph(2),
 			LogoURL:          gofakeit.URL(),
@@ -433,7 +436,6 @@ func GenerateFakeOrganizations(count int, userIDs []uuid.UUID) []domain.Organiza
 			org.Status = domain.OrganizationStatusInactive // Deleted orgs should be inactive.
 		}
 
-		_ = i
 		orgs = append(orgs, org)
 	}
 

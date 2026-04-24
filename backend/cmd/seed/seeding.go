@@ -29,7 +29,7 @@ func seedUsers(ctx context.Context, db *sqlx.DB, count int) []uuid.UUID {
 		);
 	`
 
-	users := GenerateFakeUsers(100)
+	users := GenerateFakeUsers(count)
 
 	for _, user := range users {
 		_, err := db.NamedExecContext(ctx, query, user)
@@ -100,7 +100,8 @@ func seedOrganizations(ctx context.Context, db sqlx.DB, count int, userIDs []uui
 	for _, org := range organizations {
 		_, err := db.NamedExecContext(ctx, query, org)
 		if err != nil {
-			log.Println("❌ Failed to seed user", "error", err)
+			log.Println("❌ Failed to seed org", "name", org.Name, "error", err)
+			continue
 		}
 		ids = append(ids, org.ID)
 	}
@@ -136,7 +137,8 @@ func seedMovements(ctx context.Context, db *sqlx.DB, count int, userIDs []uuid.U
 	for _, mov := range movements {
 		_, err := db.NamedExecContext(ctx, query, mov)
 		if err != nil {
-			log.Println("❌ Failed to seed movememt", "error", err)
+			log.Println("❌ Failed to seed movement", "name", mov.Name, "error", err)
+			continue
 		}
 		ids = append(ids, mov.ID)
 	}
