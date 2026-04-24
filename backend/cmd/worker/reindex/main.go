@@ -40,15 +40,17 @@ func main() {
 		logger.Error("loading database config", "error", err)
 		os.Exit(1)
 	}
+
 	db, err := sqlx.ConnectContext(ctx, "pgx", mainCfg.Database.DSN())
 	if err != nil {
 		logger.Error("opening database connection", "error", err)
 		os.Exit(1)
 	}
-	db.Close()
+	defer db.Close()
 
-	if err := db.PingContext(ctx); err != nil {
-		logger.Error("pining database", "error", err)
+	// ping with retry
+	if err := pingWithRetry(ctx, db, 3, 2*time.Second); err != nil {
+		logger.Error("database health check failed", "error", err)
 		os.Exit(1)
 	}
 
@@ -296,4 +298,23 @@ func reindexOrganizations(
 type reindexStats struct {
 	succeeded int
 	failed    int
+}
+
+// pingWithRetry attempts to ping the database with exponential backoff
+// to handle transient network issues during startup.
+func pingWithRetry(ctx context.Context, db *sqlx.DB, maxRetries int, delay time.Duration) error {
+	var err error
+	for range maxRetries {
+		err = db.PingContext(ctx)
+		if err == nil {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(delay):
+			continue
+		}
+	}
+	return err
 }
