@@ -323,7 +323,7 @@ func parseTierDistribution(raw []byte) (map[int]int, error) {
 	}
 	for k, v := range stringMap {
 		tier := 0
-		fmt.Sscanf(k, "%d", &tier)
+		_, _ = fmt.Sscanf(k, "%d", &tier)
 		result[tier] = v
 	}
 	return result, nil
