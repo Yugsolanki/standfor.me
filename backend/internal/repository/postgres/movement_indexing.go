@@ -3,11 +3,12 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/Yugsolanki/standfor-me/internal/service/search"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type MovementIndexingRepository struct {
@@ -30,7 +31,7 @@ func (r *MovementIndexingRepository) GetMovementForIndexing(
 			m.id,
 			m.slug,
 			m.name,
-			m.short_description
+			m.short_description,
 			COALESCE(m.long_description, '')      AS long_description,
 			COALESCE(m.image_url, '')             AS image_url,
 			COALESCE(m.icon_url, '')              AS icon_url,
@@ -45,7 +46,7 @@ func (r *MovementIndexingRepository) GetMovementForIndexing(
 			-- Organization fields (NULL if unclaimed)
 			COALESCE(o.id::TEXT, '')              AS claimed_by_org_id,
 			COALESCE(o.name, '')                  AS organization_name,
-			COALESCE(o.has_verified, FALSE)       AS org_has_verified,
+			COALESCE(o.is_verified, FALSE)       AS org_has_verified,
 
 			-- Depth of Commitment 
 			COALESCE(
@@ -91,6 +92,7 @@ func (r *MovementIndexingRepository) GetMovementForIndexing(
 					  AND removed_at IS NULL
 					ORDER BY
 						CASE badge_level
+							WHEN 'diamond'	THEN 5
 							WHEN 'platinum' THEN 4
 							WHEN 'gold'     THEN 3
 							WHEN 'silver'   THEN 2
@@ -98,7 +100,7 @@ func (r *MovementIndexingRepository) GetMovementForIndexing(
 							ELSE 0
 						END ASC
 					LIMIT 1
-				), ''
+				), 'bronze'
 			) AS min_badge_level,
 
 			COALESCE(
@@ -109,6 +111,7 @@ func (r *MovementIndexingRepository) GetMovementForIndexing(
 					  AND removed_at IS NULL
 					ORDER BY
 						CASE badge_level
+							WHEN 'diamond'	THEN 5
 							WHEN 'platinum' THEN 4
 							WHEN 'gold'     THEN 3
 							WHEN 'silver'   THEN 2
@@ -116,8 +119,8 @@ func (r *MovementIndexingRepository) GetMovementForIndexing(
 							ELSE 0
 						END DESC
 					LIMIT 1
-				), ''
-			) AS max_badge_level
+				), 'bronze'
+			) AS max_badge_level,
 
 			-- Tier Distribution
 			(
@@ -161,6 +164,7 @@ func (r *MovementIndexingRepository) GetMovementForIndexing(
 	`
 
 	data := &search.MovementIndexData{}
+	var tierDistRaw, badgeDistRaw []byte
 	err := r.db.QueryRowContext(ctx, movementQuery, movementID).Scan(
 		&data.ID,
 		&data.Slug,
@@ -186,14 +190,24 @@ func (r *MovementIndexingRepository) GetMovementForIndexing(
 		&data.MaxVerificationTier,
 		&data.MinBadgeLevel,
 		&data.MaxBadgeLevel,
-		&data.TierDistribution,
-		&data.BadgeDistribution,
+		&tierDistRaw,
+		&badgeDistRaw,
 	)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("movement %s not found for indexing", movementID)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("querying movement for indexing: %w", err)
+	}
+
+	// Parse JSONB distributions (PostgreSQL returns jsonb as []byte).
+	data.TierDistribution, err = parseTierDistribution(tierDistRaw)
+	if err != nil {
+		return nil, fmt.Errorf("parsing tier_distribution for %s: %w", movementID, err)
+	}
+	data.BadgeDistribution, err = parseBadgeDistribution(badgeDistRaw)
+	if err != nil {
+		return nil, fmt.Errorf("parsing badge_distribution for %s: %w", movementID, err)
 	}
 
 	// ── Category query (separate to avoid row multiplication with aggregates)
@@ -295,5 +309,45 @@ func (r *MovementIndexingRepository) GetAllMovementsForBulkIndex(
 	return nil
 }
 
-// Ensure pgx is used (it's imported for array scanning in other repos).
-var _ = pq.Array
+// parseTierDistribution converts raw JSONB bytes from PostgreSQL into a
+// map[int]int (tier → count). The JSONB stores string keys like {"0":"5"},
+// so we first unmarshal to map[string]int then convert.
+func parseTierDistribution(raw []byte) (map[int]int, error) {
+	result := make(map[int]int)
+	if len(raw) == 0 || string(raw) == "null" {
+		return result, nil
+	}
+	var stringMap map[string]int
+	if err := json.Unmarshal(raw, &stringMap); err != nil {
+		return nil, fmt.Errorf("unmarshaling tier_distribution: %w", err)
+	}
+	for k, v := range stringMap {
+		tier := 0
+		fmt.Sscanf(k, "%d", &tier)
+		result[tier] = v
+	}
+	return result, nil
+}
+
+// parseBadgeDistribution converts raw JSONB bytes from PostgreSQL into a
+// map[int]int (badge_level_numeric → count). The JSONB stores string keys
+// like {"1":"10"} where 1=bronze, 2=silver, etc.
+func parseBadgeDistribution(raw []byte) (map[int]int, error) {
+	result := make(map[int]int)
+	if len(raw) == 0 || string(raw) == "null" {
+		return result, nil
+	}
+	var stringMap map[string]int
+	if err := json.Unmarshal(raw, &stringMap); err != nil {
+		return nil, fmt.Errorf("unmarshaling badge_distribution: %w", err)
+	}
+	for k, v := range stringMap {
+		level, err := strconv.Atoi(k)
+		if err != nil {
+			// Non-numeric keys (e.g., "bronze") — skip
+			continue
+		}
+		result[level] = v
+	}
+	return result, nil
+}
