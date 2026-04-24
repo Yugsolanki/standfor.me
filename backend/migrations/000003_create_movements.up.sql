@@ -17,16 +17,21 @@ CREATE TABLE IF NOT EXISTS movements (
     image_url TEXT,
     icon_url TEXT,
     website_url TEXT,
-    -- TODO: claimed_by_org_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+    claimed_by_org_id UUID,
     supporter_count INTEGER NOT NULL DEFAULT 0,
     trending_score NUMERIC(10,4) NOT NULL DEFAULT 0,
     status movement_status NOT NULL DEFAULT 'draft',
-    created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    reviewed_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_by_user_id UUID,
+    reviewed_by_user_id UUID,
     reviewed_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    -- Foreign Keys
+    CONSTRAINT fk_movements_claimed_by_org_id FOREIGN KEY (claimed_by_org_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    CONSTRAINT fk_movements_created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_movements_reviewed_by_user_id FOREIGN KEY (reviewed_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
 
     -- Length Constraints
     CONSTRAINT chk_slug_length CHECK (char_length(slug) >= 3 AND char_length(slug) <= 100),
@@ -44,7 +49,7 @@ CREATE TABLE IF NOT EXISTS movements (
 
 -- Indexes
 CREATE UNIQUE INDEX IF NOT EXISTS idx_movements_slug_unique ON movements(slug) WHERE deleted_at IS NULL;
--- TODO: CREATE INDEX IF NOT EXISTS idx_movements_status ON movements(status);
+CREATE INDEX IF NOT EXISTS idx_movements_status ON movements(status);
 CREATE INDEX IF NOT EXISTS idx_movements_name_trgm ON movements USING gin (name gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_supporter_count ON movements(supporter_count DESC) WHERE status = 'active' AND deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_trending_score ON movements(trending_score DESC) WHERE status = 'active' AND deleted_at IS NULL;
