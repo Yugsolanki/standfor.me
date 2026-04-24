@@ -11,10 +11,12 @@ import (
 	"github.com/Yugsolanki/standfor-me/internal/config"
 	internaljwt "github.com/Yugsolanki/standfor-me/internal/pkg/jwt"
 	appvalidator "github.com/Yugsolanki/standfor-me/internal/pkg/validator"
+	meilirepository "github.com/Yugsolanki/standfor-me/internal/repository/meilisearch"
 	"github.com/Yugsolanki/standfor-me/internal/repository/postgres"
 	"github.com/Yugsolanki/standfor-me/internal/repository/redis"
 	"github.com/Yugsolanki/standfor-me/internal/server"
 	"github.com/Yugsolanki/standfor-me/internal/service"
+	searchservice "github.com/Yugsolanki/standfor-me/internal/service/search"
 )
 
 // @title			Standfor API
@@ -68,6 +70,36 @@ func main() {
 	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, jwtSvc)
 	userSvc := service.NewUserService(userRepo, refreshTokenRepo)
 
+	// --- Meilisearch Config
+	meiliCfg, err := config.LoadSearchConfig()
+	if err != nil {
+		slog.Error("failed to load meilisearch config", "error", err)
+		os.Exit(1)
+	}
+
+	// --- Meilisearch Client
+	meiliClient, err := meilirepository.NewClient(&meiliCfg.Meilisearch, logger)
+	if err != nil {
+		slog.Error("failed to create meilisearch client", "error", err)
+		os.Exit(1)
+	}
+
+	// --- Data Repository (for indexing) ---
+	movementDataRepo := postgres.NewMovementIndexingRepository(db)
+	userDataRepo := postgres.NewUserIndexingRepository(db)
+	orgDataRepo := postgres.NewOrganizationIndexingRepository(db)
+
+	// --- Search Service ---
+	searchSvc := searchservice.NewService(
+		meilirepository.NewMovementRepository(meiliClient),
+		meilirepository.NewUserRepository(meiliClient),
+		meilirepository.NewOrganizationRepository(meiliClient),
+		movementDataRepo,
+		userDataRepo,
+		orgDataRepo,
+		logger,
+	)
+
 	// --- Validator
 	validator := appvalidator.New()
 
@@ -76,8 +108,9 @@ func main() {
 		&cfg.Server,
 		logger,
 		&server.Services{
-			Auth: authSvc,
-			User: userSvc,
+			Auth:   authSvc,
+			User:   userSvc,
+			Search: searchSvc,
 		},
 		redisClient,
 		&cfg.RateLimit,

@@ -43,6 +43,18 @@ func formatError(e validator.FieldError) string {
 		return fmt.Sprintf("must be at least %s characters", e.Param())
 	case "max":
 		return fmt.Sprintf("must be at most %s characters", e.Param())
+	case "gt":
+		return fmt.Sprintf("must be greater than %s", e.Param())
+	case "lt":
+		return fmt.Sprintf("must be less than %s", e.Param())
+	case "gte":
+		return fmt.Sprintf("must be greater than or equal to %s", e.Param())
+	case "lte":
+		return fmt.Sprintf("must be less than or equal to %s", e.Param())
+	case "ltefield":
+		return fmt.Sprintf("must be less than or equal to %s", e.Param())
+	case "gtefield":
+		return fmt.Sprintf("must be greater than or equal to %s", e.Param())
 	case "alphanum":
 		return "must contain only letters and numbers"
 	case "url":

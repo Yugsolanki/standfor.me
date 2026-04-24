@@ -22,6 +22,13 @@ func (s *Server) setupRoutes(jwtSvc *internaljwt.Service) {
 	))
 
 	s.router.Route("/api/v1", func(r chi.Router) {
+		// --- Search ---
+		r.Route("/search", func(r chi.Router) {
+			r.Get("/movements", s.handle(s.SearchMovements))
+			r.Get("/users", s.handle(s.SearchUsers))
+			r.Get("/organizations", s.handle(s.SearchOrganizations))
+		})
+
 		// --- Authentication ---
 		r.Route("/auth", func(r chi.Router) {
 			// Public endpoints

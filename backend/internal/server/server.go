@@ -14,6 +14,7 @@ import (
 	"github.com/Yugsolanki/standfor-me/internal/pkg/response"
 	appvalidator "github.com/Yugsolanki/standfor-me/internal/pkg/validator"
 	"github.com/Yugsolanki/standfor-me/internal/service"
+	"github.com/Yugsolanki/standfor-me/internal/service/search"
 	"github.com/go-chi/chi/v5"
 	"github.com/redis/go-redis/v9"
 )
@@ -22,6 +23,7 @@ type Services struct {
 	Auth     *service.AuthService
 	User     *service.UserService
 	Movement *service.MovementService
+	Search   *search.Service
 }
 
 type Server struct {
