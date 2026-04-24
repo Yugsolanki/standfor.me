@@ -108,7 +108,7 @@ migrate-up: ## Run all pending migrations (via `go run ./cmd/migrate`)
 	cd $(BACKEND) && $(GO) run $(CMD_MIGRATE)
 
 migrate-down: ## Roll back the last applied migration
-	cd $(BACKEND) && $(GO) run $(CMD_MIGRATE) -down
+	cd $(BACKEND) && $(GO) run $(CMD_MIGRATE) -direction down
 
 migrate-status: ## Show current migration status
 	@echo "Migration files in $(MIGRATIONS_DIR):"
@@ -117,11 +117,13 @@ migrate-status: ## Show current migration status
 migrate-create: ## Create a new migration file (usage: make migrate-create NAME=create_foo)
 	@if [ -z "$(NAME)" ]; then \
 		echo "Usage: make migrate-create NAME=create_foo"; exit 1; fi
-	@seq=$$(ls -1 $(MIGRATIONS_DIR) | wc -l); \
-	padded=$$(printf "%06d" $$((seq + 1))); \
-	touch $(MIGRATIONS_DIR)/$${padded}_$(NAME).up.sql \
-		$(MIGRATIONS_DIR)/$${padded}_$(NAME).down.sql && \
-	echo "Created migration: $${padded}_$(NAME)"
+	@latest=$$(ls -1 $(MIGRATIONS_DIR)/*.up.sql 2>/dev/null | \
+		xargs -n1 basename 2>/dev/null | \
+		grep -oE '^[0-9]+' | sort -n | tail -1); \
+	next=$$(printf "%06d" $$((10#$${latest:-0} + 1))); \
+	touch $(MIGRATIONS_DIR)/$${next}_$(NAME).up.sql \
+	      $(MIGRATIONS_DIR)/$${next}_$(NAME).down.sql && \
+	echo "✓ Created migration: $${next}_$(NAME)"
 
 # ---------- Tests ------------------------------------------------------------
 
