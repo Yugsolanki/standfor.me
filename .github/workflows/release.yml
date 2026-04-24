@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Gate: only allow minor/major (patch == 0). Skip patch-only tags.
+  # ---------------------------------------------------------------------------
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.check.outputs.is_release }}
+    steps:
+      - name: Check version format
+        id: check
+        shell: bash
+        run: |
+          # Robust check: matches vX.Y.0 (Major/Minor) but skips vX.Y.1+
+          if [[ "${GITHUB_REF#refs/tags/}" =~ ^v[0-9]+\.[0-9]+\.0$ ]]; then
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+            echo "Proceeding with Major/Minor release."
+          else
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+            echo "Patch version detected. Skipping GoReleaser."
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Build and publish release via GoReleaser
+  # ---------------------------------------------------------------------------
+  goreleaser:
+    needs: check-version
+    if: needs.check-version.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
