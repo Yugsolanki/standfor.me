@@ -84,6 +84,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// --- Initialize Meilisearch Indexes
+	if err := meiliClient.Initialize(context.Background()); err != nil {
+		slog.Error("failed to initialize meilisearch indexes", "error", err)
+		os.Exit(1)
+	}
+
 	// --- Data Repository (for indexing) ---
 	movementDataRepo := postgres.NewMovementIndexingRepository(db)
 	userDataRepo := postgres.NewUserIndexingRepository(db)
