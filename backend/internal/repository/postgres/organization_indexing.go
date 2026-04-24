@@ -35,54 +35,42 @@ func (r *OrganizationIndexingRepository) GetOrgForIndexing(
 	orgID string,
 ) (*search.OrgIndexData, error) {
 	const query = `
-		SELECT
-			o.id::TEXT,
-			o.slug,
-			o.name,
-			COALESCE(o.short_description, '') AS short_description,
-			COALESCE(o.long_description, '') AS long_description,
-			COALESCE(o.logo_url, '') AS logo_url,
-			COALESCE(o.website_url, '') AS website_url,
-			COALESCE(o.country_code, '') AS country_code,
-			o.is_verified,
-			o.status,
-			o.created_at,
-			o.updated_at,
+			SELECT
+				o.id::TEXT,
+				o.slug,
+				o.name,
+				COALESCE(o.short_description, '') AS short_description,
+				COALESCE(o.long_description, '') AS long_description,
+				COALESCE(o.logo_url, '') AS logo_url,
+				COALESCE(o.website_url, '') AS website_url,
+				COALESCE(o.country_code, '') AS country_code,
+				o.is_verified,
+				o.status,
+				o.created_at,
+				o.updated_at,
 
-			-- supporter_count: The total number of unique users who have
-			-- publicly declared support for ANY movement claimed by this org.
-			-- This is a denormalized metric maintained by a background job
-			-- (see cmd/worker). We read it directly here for efficiency.
-			--
-			-- TODO: If you haven't implemented the background job yet, you can
-			-- temporarily compute it inline:
+				-- Sum the pre-computed counts from all of the organization's active movements.
+				COALESCE((
+					SELECT SUM(m.supporter_count)
+					FROM   movements m
+					WHERE  m.claimed_by_org_id = o.id
+					AND  m.deleted_at       IS NULL
+					AND  m.status            = 'active'
+				), 0)::INT AS supporter_count,
 
-			(
-			  SELECT COUNT(DISTINCT um.user_id)
-			  FROM   user_movements um
-			  JOIN   movements m ON m.id = um.movement_id
-			  WHERE  m.claimed_by_org_id = o.id
-			    AND  um.is_public   = TRUE
-			    AND  um.removed_at IS NULL
-			    AND  m.deleted_at  IS NULL
-			)
-			-- For now we read the pre-computed column for performance.
-			COALESCE(o.supporter_count, 0) AS supporter_count,
+				-- movement_count: How many active movements is this org associated with?
+				(
+					SELECT COUNT(*)::INT
+					FROM   movements m
+					WHERE  m.claimed_by_org_id = o.id
+					AND  m.deleted_at       IS NULL
+					AND  m.status            = 'active'
+				) AS movement_count
 
-			-- movement_count: How many active movements is this org associated with?
-			-- Computed inline to always be accurate at index time.
-			(
-				SELECT COUNT(*)::INT
-				FROM   movements m
-				WHERE  m.claimed_by_org_id = o.id
-				  AND  m.deleted_at       IS NULL
-				  AND  m.status            = 'active'
-			) AS movement_count
-
-		FROM  organizations o
-		WHERE o.id         = $1
-		  AND o.deleted_at IS NULL
-	`
+			FROM  organizations o
+			WHERE o.id         = $1
+			AND o.deleted_at IS NULL;
+		`
 
 	data := &search.OrgIndexData{}
 
