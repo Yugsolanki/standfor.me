@@ -101,6 +101,7 @@ func (r *UserIndexingRepository) GetUserForIndexing(
 					  AND removed_at IS NULL
 					ORDER BY
 						CASE badge_level
+							WHEN 'diamond'	THEN 5
 							WHEN 'platinum' THEN 4
 							WHEN 'gold'     THEN 3
 							WHEN 'silver'   THEN 2
@@ -108,7 +109,7 @@ func (r *UserIndexingRepository) GetUserForIndexing(
 							ELSE 0
 						END DESC
 					LIMIT 1
-				), ''
+				), 'bronze'
 			) AS max_badge_level,
 
 			-- Count of movements where the user is "Engaged" or higher
@@ -128,7 +129,7 @@ func (r *UserIndexingRepository) GetUserForIndexing(
 	`
 
 	data := &search.UserIndexData{}
-	var movementIds, movementNames, movementSlugs []string
+	var movementIds, movementNames, movementSlugs pqStringArray
 
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&data.ID,
@@ -229,7 +230,6 @@ func (r *UserIndexingRepository) GetAllUserIDsForReindex(ctx context.Context) ([
 	const query = `
 		SELECT id::TEXT FROM users
 		WHERE deleted_at IS NULL
-			AND stauts != 'draft'
 		ORDER BY created_at ASC
 	`
 	rows, err := r.db.QueryContext(ctx, query)
@@ -291,14 +291,14 @@ func (r *UserIndexingRepository) GetAllUsersForBulkIndex(
 // Internal helpers
 // ---------------------------------------
 
-// pqStringArray is a local type alias that implements sql.Scanner for
-// Postgres TEXT[] columns. The lib/pq package provides pq.Array() but
-// using a named type here makes the Scan call more readable.
+// pqStringArray implements sql.Scanner for Postgres TEXT[] columns.
+// Delegates to pq.StringArray which parses PG text array format
+// (e.g. `{a,b,"c,d"}`) directly — pq.GenericArray would fail because
+// string does not implement sql.Scanner.
 type pqStringArray []string
 
 func (a *pqStringArray) Scan(src any) error {
-	// Delegate to pq's array parsing logic.
-	return (&pq.GenericArray{A: (*[]string)(a)}).Scan(src)
+	return (*pq.StringArray)(a).Scan(src)
 }
 
 // Use unused
