@@ -207,7 +207,7 @@ docker-up: ## Start all services (postgres, redis, pgadmin, redisinsight)
 	docker compose -f $(COMPOSE_FILE) up -d
 
 docker-up-infra: ## Start only infrastructure (postgres + redis, skip UI tools)
-	docker compose -f $(COMPOSE_FILE) up -d postgres redis
+	docker compose -f $(COMPOSE_FILE) up -d postgres redis meilisearch
 
 docker-down: ## Stop and remove all containers
 	docker compose -f $(COMPOSE_FILE) down
