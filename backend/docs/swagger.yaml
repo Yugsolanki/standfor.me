@@ -1350,6 +1350,308 @@ paths:
       summary: List trending movements
       tags:
       - movements
+  /api/v1/search/movements:
+    get:
+      consumes:
+      - application/json
+      description: Search and filter movements by query, categories, verification
+        tiers, organization status, and popularity metrics. Returns paginated results
+        with engagement and depth-of-commitment metrics.
+      parameters:
+      - description: Full-text search query (matches name, description)
+        in: query
+        name: q
+        type: string
+      - description: Filter by movement status
+        enum:
+        - draft
+        - active
+        - archived
+        - rejected
+        - pending_review
+        in: query
+        name: status
+        type: string
+      - description: Filter by organization ID
+        in: query
+        name: org_id
+        type: string
+      - description: Sort field
+        enum:
+        - name
+        - supporter_count
+        - trending_score
+        - avg_verification_tier
+        - created_at
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort_order
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      - collectionFormat: multi
+        description: Filter by category IDs (comma-separated or multiple params)
+        in: query
+        items:
+          type: string
+        name: category_ids
+        type: array
+      - collectionFormat: multi
+        description: Filter by category slugs (comma-separated or multiple params)
+        in: query
+        items:
+          type: string
+        name: category_slugs
+        type: array
+      - collectionFormat: multi
+        description: Filter by category names (comma-separated or multiple params)
+        in: query
+        items:
+          type: string
+        name: category_names
+        type: array
+      - description: Filter movements claimed by verified organizations
+        in: query
+        name: has_verified_org
+        type: boolean
+      - description: Filter by exact verified supporter count
+        in: query
+        name: verified_supporter_count
+        type: integer
+      - description: Filter by exact unverified supporter count
+        in: query
+        name: unverified_supporters
+        type: integer
+      - description: Minimum average verification tier (0-5)
+        in: query
+        name: min_avg_vt
+        type: number
+      - description: Maximum average verification tier (0-5)
+        in: query
+        name: max_avg_vt
+        type: number
+      - description: Minimum minimum verification tier (0-5)
+        in: query
+        name: min_min_vt
+        type: integer
+      - description: Minimum maximum verification tier (0-5)
+        in: query
+        name: min_max_vt
+        type: integer
+      - description: Minimum maximum badge level (0-5, 1=bronze,5=diamond)
+        in: query
+        name: min_max_badge
+        type: integer
+      - description: Minimum total supporter count
+        in: query
+        name: min_supporters
+        type: integer
+      - description: Minimum trending score
+        in: query
+        name: min_trending
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved search results
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Search movements
+      tags:
+      - Search
+  /api/v1/search/organizations:
+    get:
+      consumes:
+      - application/json
+      description: Search and filter organizations (NGOs, non-profits, advocacy groups)
+        by query, country, and verification status. Returns paginated results with
+        supporter counts and movement associations.
+      parameters:
+      - description: Full-text search query (matches name, short_description, long_description)
+        in: query
+        name: q
+        type: string
+      - description: Filter by country code (ISO 3166-1 alpha-2, e.g., 'US', 'GB')
+        in: query
+        name: country
+        type: string
+      - description: Sort field
+        enum:
+        - name
+        - supporter_count
+        - movement_count
+        - created_at
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort_order
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Filter by verification status
+        in: query
+        name: verified
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved search results
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Search organizations
+      tags:
+      - Search
+  /api/v1/search/users:
+    get:
+      consumes:
+      - application/json
+      description: Search and filter user profiles by query, location, visibility,
+        categories, and depth-of-commitment metrics. Returns paginated results with
+        verification tier and movement support data. Only returns users with profile_visibility
+        matching the filter (public by default).
+      parameters:
+      - description: Full-text search query (matches display_name, username, bio)
+        in: query
+        name: q
+        type: string
+      - description: Filter by location
+        in: query
+        name: location
+        type: string
+      - description: Filter by profile visibility
+        enum:
+        - public
+        - private
+        - unlisted
+        in: query
+        name: visibility
+        type: string
+      - description: Sort field
+        enum:
+        - display_name
+        - username
+        - avg_verification_tier
+        - verified_movement_count
+        - created_at
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort order
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort_order
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Results per page
+        in: query
+        name: per_page
+        type: integer
+      - collectionFormat: multi
+        description: Filter by category IDs of supported movements (comma-separated
+          or multiple params)
+        in: query
+        items:
+          type: string
+        name: category_ids
+        type: array
+      - collectionFormat: multi
+        description: Filter by category slugs of supported movements (comma-separated
+          or multiple params)
+        in: query
+        items:
+          type: string
+        name: category_slugs
+        type: array
+      - collectionFormat: multi
+        description: Filter by category names of supported movements (comma-separated
+          or multiple params)
+        in: query
+        items:
+          type: string
+        name: category_names
+        type: array
+      - description: Minimum verification tier (0-5)
+        in: query
+        name: min_vt
+        type: integer
+      - description: Minimum maximum badge level achieved (0-5, 1=bronze,5=diamond)
+        in: query
+        name: min_max_badge
+        type: integer
+      - description: Minimum number of verified movements supported
+        in: query
+        name: min_verified_count
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved search results
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Search users (advocates)
+      tags:
+      - Search
   /api/v1/users/{username}:
     get:
       consumes:

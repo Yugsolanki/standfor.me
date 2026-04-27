@@ -1581,6 +1581,431 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/search/movements": {
+            "get": {
+                "description": "Search and filter movements by query, categories, verification tiers, organization status, and popularity metrics. Returns paginated results with engagement and depth-of-commitment metrics.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search movements",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Full-text search query (matches name, description)",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived",
+                            "rejected",
+                            "pending_review"
+                        ],
+                        "type": "string",
+                        "description": "Filter by movement status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by organization ID",
+                        "name": "org_id",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "name",
+                            "supporter_count",
+                            "trending_score",
+                            "avg_verification_tier",
+                            "created_at"
+                        ],
+                        "type": "string",
+                        "description": "Sort field",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Filter by category IDs (comma-separated or multiple params)",
+                        "name": "category_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Filter by category slugs (comma-separated or multiple params)",
+                        "name": "category_slugs",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Filter by category names (comma-separated or multiple params)",
+                        "name": "category_names",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter movements claimed by verified organizations",
+                        "name": "has_verified_org",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by exact verified supporter count",
+                        "name": "verified_supporter_count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by exact unverified supporter count",
+                        "name": "unverified_supporters",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum average verification tier (0-5)",
+                        "name": "min_avg_vt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Maximum average verification tier (0-5)",
+                        "name": "max_avg_vt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum minimum verification tier (0-5)",
+                        "name": "min_min_vt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum maximum verification tier (0-5)",
+                        "name": "min_max_vt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum maximum badge level (0-5, 1=bronze,5=diamond)",
+                        "name": "min_max_badge",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum total supporter count",
+                        "name": "min_supporters",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum trending score",
+                        "name": "min_trending",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved search results",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/search/organizations": {
+            "get": {
+                "description": "Search and filter organizations (NGOs, non-profits, advocacy groups) by query, country, and verification status. Returns paginated results with supporter counts and movement associations.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search organizations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Full-text search query (matches name, short_description, long_description)",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by country code (ISO 3166-1 alpha-2, e.g., 'US', 'GB')",
+                        "name": "country",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "name",
+                            "supporter_count",
+                            "movement_count",
+                            "created_at"
+                        ],
+                        "type": "string",
+                        "description": "Sort field",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by verification status",
+                        "name": "verified",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved search results",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/search/users": {
+            "get": {
+                "description": "Search and filter user profiles by query, location, visibility, categories, and depth-of-commitment metrics. Returns paginated results with verification tier and movement support data. Only returns users with profile_visibility matching the filter (public by default).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search users (advocates)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Full-text search query (matches display_name, username, bio)",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by location",
+                        "name": "location",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "public",
+                            "private",
+                            "unlisted"
+                        ],
+                        "type": "string",
+                        "description": "Filter by profile visibility",
+                        "name": "visibility",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "display_name",
+                            "username",
+                            "avg_verification_tier",
+                            "verified_movement_count",
+                            "created_at"
+                        ],
+                        "type": "string",
+                        "description": "Sort field",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort_order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Results per page",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Filter by category IDs of supported movements (comma-separated or multiple params)",
+                        "name": "category_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Filter by category slugs of supported movements (comma-separated or multiple params)",
+                        "name": "category_slugs",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Filter by category names of supported movements (comma-separated or multiple params)",
+                        "name": "category_names",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum verification tier (0-5)",
+                        "name": "min_vt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum maximum badge level achieved (0-5, 1=bronze,5=diamond)",
+                        "name": "min_max_badge",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Minimum number of verified movements supported",
+                        "name": "min_verified_count",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved search results",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users/me": {
             "get": {
                 "security": [
