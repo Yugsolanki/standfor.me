@@ -8,6 +8,37 @@ import (
 	"github.com/Yugsolanki/standfor-me/internal/pkg/response"
 )
 
+// SearchMovements searches for movements with advanced filtering and sorting.
+//
+//	@Summary		Search movements
+//	@Description	Search and filter movements by query, categories, verification tiers, organization status, and popularity metrics. Returns paginated results with engagement and depth-of-commitment metrics.
+//	@Tags			Search
+//	@Accept			json
+//	@Produce		json
+//	@Param			q							query		string						false	"Full-text search query (matches name, description)"
+//	@Param			status						query		string						false	"Filter by movement status"	Enums(draft, active, archived, rejected, pending_review)
+//	@Param			org_id						query		string						false	"Filter by organization ID"
+//	@Param			sort_by						query		string						false	"Sort field"													Enums(name, supporter_count, trending_score, avg_verification_tier, created_at)
+//	@Param			sort_order					query		string						false	"Sort order"													Enums(asc, desc)
+//	@Param			page						query		int							false	"Page number"													default(1)
+//	@Param			per_page					query		int							false	"Results per page"												default(20)
+//	@Param			category_ids				query		[]string					false	"Filter by category IDs (comma-separated or multiple params)"	collectionFormat(multi)
+//	@Param			category_slugs				query		[]string					false	"Filter by category slugs (comma-separated or multiple params)"	collectionFormat(multi)
+//	@Param			category_names				query		[]string					false	"Filter by category names (comma-separated or multiple params)"	collectionFormat(multi)
+//	@Param			has_verified_org			query		bool						false	"Filter movements claimed by verified organizations"			true,false
+//	@Param			verified_supporter_count	query		int							false	"Filter by exact verified supporter count"
+//	@Param			unverified_supporters		query		int							false	"Filter by exact unverified supporter count"
+//	@Param			min_avg_vt					query		number						false	"Minimum average verification tier (0-5)"
+//	@Param			max_avg_vt					query		number						false	"Maximum average verification tier (0-5)"
+//	@Param			min_min_vt					query		int							false	"Minimum minimum verification tier (0-5)"
+//	@Param			min_max_vt					query		int							false	"Minimum maximum verification tier (0-5)"
+//	@Param			min_max_badge				query		int							false	"Minimum maximum badge level (0-5, 1=bronze,5=diamond)"
+//	@Param			min_supporters				query		int							false	"Minimum total supporter count"
+//	@Param			min_trending				query		number						false	"Minimum trending score"
+//	@Success		200							{object}	response.SuccessResponse	"Successfully retrieved search results"
+//	@Failure		400							{object}	response.ErrorResponse		"Invalid query parameters"
+//	@Failure		500							{object}	response.ErrorResponse		"Internal server error"
+//	@Router			/api/v1/search/movements [get]
 func (s *Server) SearchMovements(w http.ResponseWriter, r *http.Request) error {
 	req := &searchdomain.MovementSearchRequest{
 		Query:   r.URL.Query().Get("q"),
@@ -47,7 +78,30 @@ func (s *Server) SearchMovements(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// SearchUsers handles advocate discovery with commitment-level filtering.
+// SearchUsers searches for users/advocates with advanced filtering.
+//
+//	@Summary		Search users (advocates)
+//	@Description	Search and filter user profiles by query, location, visibility, categories, and depth-of-commitment metrics. Returns paginated results with verification tier and movement support data. Only returns users with profile_visibility matching the filter (public by default).
+//	@Tags			Search
+//	@Accept			json
+//	@Produce		json
+//	@Param			q					query		string						false	"Full-text search query (matches display_name, username, bio)"
+//	@Param			location			query		string						false	"Filter by location"
+//	@Param			visibility			query		string						false	"Filter by profile visibility"															Enums(public, private, unlisted)
+//	@Param			sort_by				query		string						false	"Sort field"																			Enums(display_name, username, avg_verification_tier, verified_movement_count, created_at)
+//	@Param			sort_order			query		string						false	"Sort order"																			Enums(asc, desc)
+//	@Param			page				query		int							false	"Page number"																			default(1)
+//	@Param			per_page			query		int							false	"Results per page"																		default(20)
+//	@Param			category_ids		query		[]string					false	"Filter by category IDs of supported movements (comma-separated or multiple params)"	collectionFormat(multi)
+//	@Param			category_slugs		query		[]string					false	"Filter by category slugs of supported movements (comma-separated or multiple params)"	collectionFormat(multi)
+//	@Param			category_names		query		[]string					false	"Filter by category names of supported movements (comma-separated or multiple params)"	collectionFormat(multi)
+//	@Param			min_vt				query		int							false	"Minimum verification tier (0-5)"
+//	@Param			min_max_badge		query		int							false	"Minimum maximum badge level achieved (0-5, 1=bronze,5=diamond)"
+//	@Param			min_verified_count	query		int							false	"Minimum number of verified movements supported"
+//	@Success		200					{object}	response.SuccessResponse	"Successfully retrieved search results"
+//	@Failure		400					{object}	response.ErrorResponse		"Invalid query parameters"
+//	@Failure		500					{object}	response.ErrorResponse		"Internal server error"
+//	@Router			/api/v1/search/users [get]
 func (s *Server) SearchUsers(w http.ResponseWriter, r *http.Request) error {
 	req := &searchdomain.UserSearchRequest{
 		Query:             r.URL.Query().Get("q"),
@@ -78,7 +132,24 @@ func (s *Server) SearchUsers(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// SearchOrganizations handles organization discovery.
+// SearchOrganizations searches for organizations with filtering.
+//
+//	@Summary		Search organizations
+//	@Description	Search and filter organizations (NGOs, non-profits, advocacy groups) by query, country, and verification status. Returns paginated results with supporter counts and movement associations.
+//	@Tags			Search
+//	@Accept			json
+//	@Produce		json
+//	@Param			q			query		string						false	"Full-text search query (matches name, short_description, long_description)"
+//	@Param			country		query		string						false	"Filter by country code (ISO 3166-1 alpha-2, e.g., 'US', 'GB')"
+//	@Param			sort_by		query		string						false	"Sort field"					Enums(name, supporter_count, movement_count, created_at)
+//	@Param			sort_order	query		string						false	"Sort order"					Enums(asc, desc)
+//	@Param			page		query		int							false	"Page number"					default(1)
+//	@Param			per_page	query		int							false	"Results per page"				default(20)
+//	@Param			verified	query		bool						false	"Filter by verification status"	true,false
+//	@Success		200			{object}	response.SuccessResponse	"Successfully retrieved search results"
+//	@Failure		400			{object}	response.ErrorResponse		"Invalid query parameters"
+//	@Failure		500			{object}	response.ErrorResponse		"Internal server error"
+//	@Router			/api/v1/search/organizations [get]
 func (s *Server) SearchOrganizations(w http.ResponseWriter, r *http.Request) error {
 	req := &searchdomain.OrganizationSearchRequest{
 		Query:       r.URL.Query().Get("q"),
