@@ -746,6 +746,10 @@ The API will be available at `http://localhost:8080`.
 | `make migrate-create NAME=x` | Create new migration |
 | `make tidy` | Run `go mod tidy` |
 | `make all` | Full pipeline: tidy → format → lint → test → build |
+| `make sql-check` | Run SQL migration audit on all .sql files |
+| `make sql-check-ci` | Run SQL check with CI-friendly output |
+| `make sql-check-one FILE=x` | Check a single migration file |
+| `make sql-audit-report` | Generate comprehensive SQL audit report |
 
 ### Development Loop
 
@@ -754,7 +758,43 @@ The API will be available at `http://localhost:8080`.
 3. **Test** with `make test` or `make test-one`
 4. **Format** with `make format`
 5. **Lint** with `make lint` or `make lint-fix`
-6. **Commit** (pre-commit hooks run automatically)
+6. **Check SQL migrations** with `make sql-check` (for new .sql files)
+7. **Commit** (pre-commit hooks run automatically)
+
+### SQL Migration Checking
+
+The project includes a comprehensive SQL migration checker that performs strict static analysis on PostgreSQL `.sql` files. It detects:
+
+- **🔴 CRITICAL**: SQL injection vulnerabilities, missing migration pairs
+- **🟡 WARNING**: Missing FK policies, missing indexes, non-idempotent statements, naming issues
+- **🔵 INFO**: Missing audit fields, text constraints, optimization suggestions
+
+```bash
+# Check all migrations
+make sql-check
+
+# Check a single file
+make sql-check-one FILE=000009_create_user_movements.up.sql
+
+# CI-friendly output format
+make sql-check-ci
+
+# Generate detailed audit report
+make sql-audit-report
+```
+
+**When to use:**
+- Before committing new migration files
+- In CI/CD pipeline to block problematic migrations
+- When auditing existing migrations for technical debt
+- During code reviews of database schema changes
+
+**Example output:**
+```
+🟡 WARNING: 000009_create_user_movements.up.sql:15 - Table name uses PascalCase, consider snake_case
+🟡 WARNING: 000003_create_organizations.up.sql - Foreign key column 'verified_by_user_id' needs index
+🔵 INFO: 000005_create_refresh_tokens.up.sql - Consider adding updated_at TIMESTAMPTZ with trigger
+```
 
 ### Reindexing Meilisearch
 
@@ -1241,6 +1281,11 @@ make migrate-up           # Run migrations
 make format               # Format code
 make lint                 # Run linter
 make lint-fix             # Auto-fix issues
+
+# SQL Migration Checks
+make sql-check            # Audit all SQL migrations
+make sql-check-ci         # CI-friendly format
+make sql-check-one FILE=x # Check single file
 
 # Testing
 make test                 # Run all tests
