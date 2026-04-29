@@ -60,6 +60,7 @@ COMMIT         := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknow
 	lint lint-fix \
 	format tidy deps-update deps-cleanup \
 	swag \
+	sql-check sql-check-one sql-check-ci sql-audit-report \
 	docker-up docker-down docker-logs docker-clean \
 	docker-build docker-build-all \
 	goreleaser-snapshot goreleaser-release \
@@ -200,6 +201,26 @@ swag: ## Generate Swagger documentation (swag init)
 		$(GO) install github.com/swaggo/swag/cmd/swag@latest; \
 	fi
 	cd $(BACKEND) && swag init -g $(CMD_API)/main.go -o $(SWAG_OUTPUT) --parseDependency --parseInternal
+
+# ---------- SQL Migration Checks ---------------------------------------------
+
+sql-check: ## Run SQL migration audit on all .sql files in migrations directory
+	@echo "Running SQL migration audit..."
+	@./scripts/sql-check.sh
+
+sql-check-one: ## Run SQL check on a single migration file (usage: make sql-check-one FILE=000009_create_user_movements.up.sql)
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make sql-check-one FILE=000009_create_user_movements.up.sql"; exit 1; \
+	fi
+	@./scripts/sql-check.sh --file $(FILE)
+
+sql-check-ci: ## Run SQL migration audit with CI-friendly output format
+	@echo "Running SQL migration audit (CI mode)..."
+	@./scripts/sql-check.sh --ci
+
+sql-audit-report: ## Generate comprehensive SQL migration audit report
+	@echo "Generating SQL migration audit report..."
+	@./scripts/sql-check.sh --report
 
 # ---------- Docker & Compose -------------------------------------------------
 
